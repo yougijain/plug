@@ -1,0 +1,36 @@
+# Cursor Rules for Supabase Integration
+
+## Database Access
+- You have access to the Supabase database schema defined in `src/types/database.ts`
+- Use the API functions in `src/lib/api.ts` for database operations
+- All database operations should be type-safe using the Database type
+
+## Supabase Project Configuration
+- Project URL: Use REACT_APP_SUPABASE_URL from environment
+- API Key: Use REACT_APP_SUPABASE_ANON_KEY from environment
+- Database Schema: Follow the structure in `src/types/database.ts`
+
+## Direct Database Operations
+You can help with:
+- Writing SQL queries for Supabase
+- Creating database migrations
+- Setting up Row Level Security policies
+- Managing database indexes
+- Creating stored procedures and functions
+
+## API Development
+- Create new API endpoints using the existing patterns in `src/lib/api.ts`
+- Implement real-time subscriptions
+- Handle authentication and authorization
+- Manage file uploads to Supabase Storage
+
+## Database Schema Management
+- Update the TypeScript types when schema changes
+- Ensure type safety across all database operations
+- Maintain consistency between database and application types
+
+## Security Best Practices
+- Always use Row Level Security (RLS) policies
+- Validate input data before database operations
+- Use parameterized queries to prevent SQL injection
+- Implement proper error handling for database operations 

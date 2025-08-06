@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { User, Post } from '../types/index';
 import { formatDistanceToNow } from 'date-fns';
 import { BoltIcon, FireIcon, ClockIcon } from '@heroicons/react/24/outline';
@@ -12,66 +12,68 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Mock data for MVP - simulating real-time updates
-  const mockPosts: Post[] = [
+  const mockPosts = useMemo<Post[]>(() => [
     {
       id: '1',
-      userId: 'user1',
+      user_id: 'user1',
       type: 'item',
       title: 'FREE Pizza - Domino\'s Flash Deal!',
       description: 'Next 5 pizzas sold at Domino\'s will be $5 only! Limited time offer.',
       price: 5,
       category: 'Food',
       location: 'Purdue Campus',
-      createdAt: new Date(Date.now() - 2 * 60 * 1000), // 2 minutes ago
+      created_at: new Date(Date.now() - 2 * 60 * 1000).toISOString(), // 2 minutes ago
       status: 'active',
       tags: ['pizza', 'food', 'flash-deal'],
-      isFlashDeal: true,
-      flashDealExpiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes from now
+      is_flash_deal: true,
+      flash_deal_expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes from now
     },
     {
       id: '2',
-      userId: 'user2',
+      user_id: 'user2',
       type: 'service',
       title: 'Last-minute haircut needed!',
       description: 'Need a haircut for an interview tomorrow. Will pay extra for quick service.',
       price: 30,
       category: 'Services',
-      location: 'Purdue Campus',
-      createdAt: new Date(Date.now() - 5 * 60 * 1000), // 5 minutes ago
+      location: 'Indiana University Campus',
+      created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
       status: 'active',
       tags: ['haircut', 'urgent', 'service'],
     },
     {
       id: '3',
-      userId: 'user3',
+      user_id: 'user3',
       type: 'ride',
       title: 'URGENT: Ride to airport needed',
       description: 'Flight leaves in 2 hours. Will pay $50 for immediate ride to IND airport.',
       price: 50,
       category: 'Transportation',
       location: 'Purdue to IND Airport',
-      createdAt: new Date(Date.now() - 8 * 60 * 1000), // 8 minutes ago
+      created_at: new Date(Date.now() - 8 * 60 * 1000).toISOString(), // 8 minutes ago
       status: 'active',
       tags: ['urgent', 'airport', 'ride'],
     },
     {
       id: '4',
-      userId: 'user4',
+      user_id: 'user4',
       type: 'item',
       title: 'Selling textbooks - Finals week special',
       description: 'All engineering textbooks 50% off. Need to sell before graduation.',
       price: 25,
       category: 'Books',
-      location: 'Purdue Campus',
-      createdAt: new Date(Date.now() - 12 * 60 * 1000), // 12 minutes ago
+      location: 'Indiana University Campus',
+      created_at: new Date(Date.now() - 12 * 60 * 1000).toISOString(), // 12 minutes ago
       status: 'active',
       tags: ['textbooks', 'engineering', 'graduation'],
     },
-  ];
+  ], []);
 
   useEffect(() => {
     setPosts(mockPosts);
-    
+  }, [mockPosts]);
+
+  useEffect(() => {
     // Simulate real-time updates every 30 seconds
     const interval = setInterval(() => {
       setIsRefreshing(true);
@@ -80,14 +82,14 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
         if (Math.random() > 0.7) {
           const newPost: Post = {
             id: Date.now().toString(),
-            userId: 'user' + Math.floor(Math.random() * 10),
+            user_id: 'user' + Math.floor(Math.random() * 10),
             type: 'item',
             title: 'New post just added!',
             description: 'This is a simulated real-time post.',
             price: Math.floor(Math.random() * 50) + 10,
             category: 'General',
-            location: 'Purdue Campus',
-            createdAt: new Date(),
+            location: Math.random() > 0.5 ? 'Purdue Campus' : 'Indiana University Campus',
+            created_at: new Date().toISOString(),
             status: 'active',
             tags: ['new', 'real-time'],
           };
@@ -98,7 +100,7 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [mockPosts]);
+  }, []);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -148,7 +150,7 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
         <div className="space-y-4">
           {posts.map((post) => (
             <div key={post.id} className="bg-white rounded-lg border border-gray-200 p-4 relative">
-              {post.isFlashDeal && (
+              {post.is_flash_deal && (
                 <div className="absolute top-2 right-2 flex items-center space-x-1 bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs">
                   <FireIcon className="h-3 w-3" />
                   <span>Flash Deal</span>
@@ -161,7 +163,7 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
                   <p className="text-sm text-gray-600">{post.description}</p>
                 </div>
                 {post.price && (
-                  <span className="text-lg font-bold text-primary-600 ml-2">
+                  <span className="text-lg font-bold text-blue-600 ml-2">
                     ${post.price}
                   </span>
                 )}
@@ -171,16 +173,16 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
                 <span>{post.location}</span>
                 <div className="flex items-center space-x-1">
                   <ClockIcon className="h-3 w-3" />
-                  <span>{formatDistanceToNow(post.createdAt, { addSuffix: true })}</span>
+                  <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
                 </div>
               </div>
               
-              {post.isFlashDeal && post.flashDealExpiresAt && (
+              {post.is_flash_deal && post.flash_deal_expires_at && (
                 <div className="mt-2 p-2 bg-red-50 rounded-lg">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-red-600 font-medium">Flash Deal Expires</span>
                     <span className="text-red-500">
-                      {formatDistanceToNow(post.flashDealExpiresAt, { addSuffix: true })}
+                      {formatDistanceToNow(new Date(post.flash_deal_expires_at), { addSuffix: true })}
                     </span>
                   </div>
                 </div>
@@ -201,20 +203,20 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
                 ))}
               </div>
               
-                             <div className="flex space-x-2 mt-3">
-                 <button 
-                   onClick={() => handleContact(post.id)}
-                   className="flex-1 bg-primary-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
-                 >
-                   Contact
-                 </button>
-                 <button 
-                   onClick={() => handleSave(post.id)}
-                   className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
-                 >
-                   Save
-                 </button>
-               </div>
+              <div className="flex space-x-2 mt-3">
+                <button 
+                  onClick={() => handleContact(post.id)}
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Contact
+                </button>
+                <button 
+                  onClick={() => handleSave(post.id)}
+                  className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                >
+                  Save
+                </button>
+              </div>
             </div>
           ))}
         </div>

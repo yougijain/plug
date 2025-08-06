@@ -1,109 +1,292 @@
 import React, { useState } from 'react';
-import { User } from '../types/index';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useAuth } from '../hooks/useAuth';
+import { useAppStore } from '../lib/store';
 
-interface LoginProps {
-  onLogin: (user: User) => void;
-}
+const signUpSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  university: z.union([
+    z.literal(''),
+    z.enum(['Purdue University', 'Indiana University'])
+  ]).refine((val) => val !== '', {
+    message: 'Please select your university',
+  }),
+});
 
-const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [university, setUniversity] = useState('');
-  const [error, setError] = useState('');
+const signInSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+type SignUpForm = z.infer<typeof signUpSchema>;
+type SignInForm = z.infer<typeof signInSchema>;
+
+const Login: React.FC = () => {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [signUpSuccess, setSignUpSuccess] = useState(false);
+  const { signUp, signIn, isSigningUp, isSigningIn } = useAuth();
+  const { error, clearError } = useAppStore();
+
+  const signUpForm = useForm<SignUpForm>({
+    resolver: zodResolver(signUpSchema),
+  });
+
+  const signInForm = useForm<SignInForm>({
+    resolver: zodResolver(signInSchema),
+  });
+
+  const onSignUp = async (data: SignUpForm) => {
+    clearError();
+    setSignUpSuccess(false);
     
-    if (!email.endsWith('.edu')) {
-      setError('Please use your .edu email address');
-      return;
+    try {
+      console.log('🔍 [Login] Starting sign up process...', { email: data.email, university: data.university });
+      
+      await signUp({
+        email: data.email,
+        password: data.password,
+        userData: {
+          name: data.name,
+          email: data.email,
+          university: data.university,
+          avatar: undefined,
+        },
+      });
+      
+      console.log('✅ [Login] Sign up successful!');
+      setSignUpSuccess(true);
+      
+      // Clear form after successful sign up
+      signUpForm.reset();
+      
+      // Show success message for 3 seconds, then switch to sign in
+      setTimeout(() => {
+        setSignUpSuccess(false);
+        setIsSignUp(false);
+      }, 3000);
+      
+    } catch (err) {
+      console.error('❌ [Login] Sign up failed:', err);
+      // Error will be handled by the useAuth hook and displayed in the error state
     }
+  };
 
-    if (!name.trim() || !university.trim()) {
-      setError('Please fill in all fields');
-      return;
+  const onSignIn = async (data: SignInForm) => {
+    clearError();
+    
+    try {
+      console.log('🔍 [Login] Starting sign in process...', { email: data.email });
+      
+      await signIn({
+        email: data.email,
+        password: data.password,
+      });
+      
+      console.log('✅ [Login] Sign in successful!');
+      
+    } catch (err) {
+      console.error('❌ [Login] Sign in failed:', err);
+      // Error will be handled by the useAuth hook and displayed in the error state
     }
-
-    const user: User = {
-      id: Date.now().toString(),
-      name: name.trim(),
-      email: email.toLowerCase(),
-      university: university.trim(),
-      verified: true,
-    };
-
-    onLogin(user);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Connect App</h1>
-          <p className="text-gray-600">Your campus marketplace</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Loop</h1>
+          <p className="text-gray-600">Connect with your university community</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="Enter your full name"
-            />
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">{error}</p>
           </div>
+        )}
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              .edu Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="your.email@university.edu"
-            />
+        {signUpSuccess && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-600 text-sm">Account created successfully!</p>
           </div>
+        )}
 
-          <div>
-            <label htmlFor="university" className="block text-sm font-medium text-gray-700 mb-2">
-              University
-            </label>
-            <select
-              id="university"
-              value={university}
-              onChange={(e) => setUniversity(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Select your university</option>
-              <option value="Purdue University">Purdue University</option>
-              <option value="Indiana University">Indiana University</option>
-            </select>
-          </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {error}
-            </div>
-          )}
-
+        <div className="flex mb-6">
           <button
-            type="submit"
-            className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-primary-700 transition-colors"
+            onClick={() => setIsSignUp(false)}
+            className={`flex-1 py-2 px-4 rounded-l-lg font-medium transition-colors ${
+              !isSignUp
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
           >
-            Get Started
+            Sign In
           </button>
-        </form>
+          <button
+            onClick={() => setIsSignUp(true)}
+            className={`flex-1 py-2 px-4 rounded-r-lg font-medium transition-colors ${
+              isSignUp
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Sign Up
+          </button>
+        </div>
 
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>By continuing, you agree to our Terms of Service and Privacy Policy</p>
+        {isSignUp ? (
+          <form onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name
+              </label>
+              <input
+                type="text"
+                {...signUpForm.register('name')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter your full name"
+              />
+              {signUpForm.formState.errors.name && (
+                <p className="text-red-500 text-xs mt-1">
+                  {signUpForm.formState.errors.name.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                University
+              </label>
+              <select
+                {...signUpForm.register('university')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Select your university</option>
+                <option value="Purdue University">Purdue University</option>
+                <option value="Indiana University">Indiana University</option>
+              </select>
+              {signUpForm.formState.errors.university && (
+                <p className="text-red-500 text-xs mt-1">
+                  {signUpForm.formState.errors.university.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                {...signUpForm.register('email')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter your email"
+              />
+              {signUpForm.formState.errors.email && (
+                <p className="text-red-500 text-xs mt-1">
+                  {signUpForm.formState.errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                {...signUpForm.register('password')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Create a password"
+              />
+              {signUpForm.formState.errors.password && (
+                <p className="text-red-500 text-xs mt-1">
+                  {signUpForm.formState.errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSigningUp}
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSigningUp ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Creating Account...
+                </div>
+              ) : (
+                'Create Account'
+              )}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={signInForm.handleSubmit(onSignIn)} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                {...signInForm.register('email')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter your email"
+              />
+              {signInForm.formState.errors.email && (
+                <p className="text-red-500 text-xs mt-1">
+                  {signInForm.formState.errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                {...signInForm.register('password')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter your password"
+              />
+              {signInForm.formState.errors.password && (
+                <p className="text-red-500 text-xs mt-1">
+                  {signInForm.formState.errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSigningIn}
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSigningIn ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Signing In...
+                </div>
+              ) : (
+                'Sign In'
+              )}
+            </button>
+          </form>
+        )}
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
+              {isSignUp ? 'Sign In' : 'Sign Up'}
+            </button>
+          </p>
         </div>
       </div>
     </div>

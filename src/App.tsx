@@ -1,21 +1,57 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import Navigation from './components/Navigation';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useAuth } from './hooks/useAuth';
+import { testSupabaseConnection } from './lib/api';
 import Home from './pages/Home';
 import Explore from './pages/Explore';
 import Cruze from './pages/Cruze';
 import LiveNow from './pages/LiveNow';
 import Messages from './pages/Messages';
 import Login from './pages/Login';
-import { User } from './types/index';
+import Navigation from './components/Navigation';
 
-// Component to handle navigation state
-function AppContent({ currentUser }: { currentUser: User }) {
-  const location = useLocation();
+const queryClient = new QueryClient();
+
+// Demo user for testing
+const DEMO_USER = {
+  id: 'demo-user-1',
+  name: 'Demo User',
+  email: 'demo@example.com',
+  university: 'Purdue University',
+  avatar: undefined,
+  verified: true,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
+const AppContent: React.FC = () => {
+  const { currentUser } = useAuth();
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [dbConnectionStatus, setDbConnectionStatus] = useState<'checking' | 'connected' | 'failed'>('checking');
   const navigate = useNavigate();
-  
-  // Determine active tab based on current route
-  const getActiveTab = (): 'home' | 'explore' | 'cruze' | 'live' | 'messages' => {
+  const location = useLocation();
+
+  useEffect(() => {
+    const checkDatabaseConnection = async () => {
+      console.log('🔍 [App] Checking database connection...');
+      const isConnected = await testSupabaseConnection();
+      
+      if (isConnected) {
+        console.log('✅ [App] Database connected successfully');
+        setDbConnectionStatus('connected');
+        setIsDemoMode(false);
+      } else {
+        console.log('⚠️ [App] Database connection failed, using demo mode');
+        setDbConnectionStatus('failed');
+        setIsDemoMode(true);
+      }
+    };
+
+    checkDatabaseConnection();
+  }, []);
+
+  const getActiveTab = () => {
     const path = location.pathname;
     if (path === '/' || path === '/home') return 'home';
     if (path === '/explore') return 'explore';
@@ -25,7 +61,8 @@ function AppContent({ currentUser }: { currentUser: User }) {
     return 'home';
   };
 
-  const handleTabChange = (tab: 'home' | 'explore' | 'cruze' | 'live' | 'messages') => {
+  const handleTabChange = (tab: string) => {
+    console.log('🔍 [App] Tab change requested:', tab);
     switch (tab) {
       case 'home':
         navigate('/');
@@ -42,36 +79,67 @@ function AppContent({ currentUser }: { currentUser: User }) {
       case 'messages':
         navigate('/messages');
         break;
+      default:
+        navigate('/');
     }
   };
 
+  // Show loading while checking database
+  if (dbConnectionStatus === 'checking') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking database connection...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login if no user
+  if (!currentUser && !isDemoMode) {
+    return <Login />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {isDemoMode && (
+        <div className="bg-yellow-100 border-b border-yellow-200 px-4 py-2 text-center">
+          <p className="text-yellow-800 text-sm">
+            🚀 <strong>Demo Mode:</strong> Running without Supabase. Sign up for full features!
+          </p>
+        </div>
+      )}
+      
+      {dbConnectionStatus === 'connected' && (
+        <div className="bg-green-100 border-b border-green-200 px-4 py-2 text-center">
+          <p className="text-green-800 text-sm">
+            ✅ <strong>Database Connected:</strong> All features are live!
+          </p>
+        </div>
+      )}
+      
       <div className="max-w-md mx-auto bg-white min-h-screen shadow-lg">
         <Routes>
-          <Route path="/" element={<Home currentUser={currentUser} />} />
-          <Route path="/home" element={<Home currentUser={currentUser} />} />
-          <Route path="/explore" element={<Explore currentUser={currentUser} />} />
-          <Route path="/cruze" element={<Cruze currentUser={currentUser} />} />
-          <Route path="/live" element={<LiveNow currentUser={currentUser} />} />
-          <Route path="/messages" element={<Messages currentUser={currentUser} />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/explore" element={<Explore currentUser={currentUser || DEMO_USER} />} />
+          <Route path="/cruze" element={<Cruze currentUser={currentUser || DEMO_USER} />} />
+          <Route path="/live" element={<LiveNow currentUser={currentUser || DEMO_USER} />} />
+          <Route path="/messages" element={<Messages />} />
         </Routes>
         <Navigation activeTab={getActiveTab()} onTabChange={handleTabChange} />
       </div>
     </div>
   );
-}
+};
 
 function App() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-
-  if (!currentUser) {
-    return <Login onLogin={setCurrentUser} />;
-  }
-
   return (
     <Router>
-      <AppContent currentUser={currentUser} />
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>
     </Router>
   );
 }

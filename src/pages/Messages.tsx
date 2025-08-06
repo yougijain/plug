@@ -1,228 +1,375 @@
-import React, { useState } from 'react';
-import { User, Conversation, Message } from '../types/index';
-import { formatDistanceToNow } from 'date-fns';
-import { ChatBubbleLeftRightIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { useConversations, useMessages } from '../hooks/useMessages';
+import { useAppStore } from '../lib/store';
+import { PaperAirplaneIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 
-interface MessagesProps {
-  currentUser: User;
-}
-
-const Messages: React.FC<MessagesProps> = ({ currentUser }) => {
+const Messages: React.FC = () => {
+  const { currentUser } = useAuth();
+  const { conversations, isLoading: isLoadingConversations } = useConversations(currentUser?.id || '');
+  const { error } = useAppStore();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  const [newMessage, setNewMessage] = useState('');
+  const [messageText, setMessageText] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [localConversations, setLocalConversations] = useState<any[]>([]);
+  const [localMessages, setLocalMessages] = useState<{[conversationId: string]: any[]}>({});
 
-  // Mock data for MVP
-  const conversations: Conversation[] = [
-    {
-      id: '1',
-      participants: ['user1', currentUser.id],
-      lastMessage: {
-        id: 'msg1',
-        senderId: 'user1',
-        receiverId: currentUser.id,
-        content: 'Hey! Is the MacBook still available?',
-        createdAt: new Date(Date.now() - 5 * 60 * 1000),
-        read: false,
-      },
-      unreadCount: 1,
-    },
-    {
-      id: '2',
-      participants: ['user2', currentUser.id],
-      lastMessage: {
-        id: 'msg2',
-        senderId: currentUser.id,
-        receiverId: 'user2',
-        content: 'Thanks for the ride yesterday!',
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        read: true,
-      },
-      unreadCount: 0,
-    },
-    {
-      id: '3',
-      participants: ['user3', currentUser.id],
-      lastMessage: {
-        id: 'msg3',
-        senderId: 'user3',
-        receiverId: currentUser.id,
-        content: 'Can you do the haircut tomorrow at 3 PM?',
-        createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
-        read: false,
-      },
-      unreadCount: 1,
-    },
-  ];
+  const { messages, sendMessage, isLoading: isLoadingMessages } = useMessages(selectedConversation || '');
 
-  const messages: Message[] = [
-    {
-      id: '1',
-      senderId: 'user1',
-      receiverId: currentUser.id,
-      content: 'Hey! Is the MacBook still available?',
-      createdAt: new Date(Date.now() - 10 * 60 * 1000),
-      read: true,
-    },
-    {
-      id: '2',
-      senderId: currentUser.id,
-      receiverId: 'user1',
-      content: 'Yes, it is! Are you interested?',
-      createdAt: new Date(Date.now() - 8 * 60 * 1000),
-      read: true,
-    },
-    {
-      id: '3',
-      senderId: 'user1',
-      receiverId: currentUser.id,
-      content: 'Perfect! Can I see it today?',
-      createdAt: new Date(Date.now() - 5 * 60 * 1000),
-      read: false,
-    },
-  ];
+  // Initialize test messages for each conversation
+  useEffect(() => {
+    if (conversations.length > 0) {
+      const initialMessages: {[conversationId: string]: any[]} = {};
+      conversations.forEach(conv => {
+        initialMessages[conv.id] = [
+          {
+            id: `test-${conv.id}-1`,
+            sender_id: 'user2',
+            receiver_id: currentUser?.id || 'user1',
+            conversation_id: conv.id,
+            content: `Test message from user2 in conversation ${conv.id}`,
+            created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+            read: false,
+          },
+          {
+            id: `test-${conv.id}-2`,
+            sender_id: currentUser?.id || 'user1',
+            receiver_id: 'user2',
+            conversation_id: conv.id,
+            content: `Test message from current user in conversation ${conv.id}`,
+            created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+            read: true,
+          }
+        ];
+      });
+      setLocalMessages(initialMessages);
+    }
+  }, [conversations, currentUser?.id]);
+
+  // Use local messages for the selected conversation
+  const displayMessages = selectedConversation ? (localMessages[selectedConversation] || []) : [];
+
+  // Debug logs
+  console.log('🔍 [Messages] currentUser:', currentUser);
+  console.log('🔍 [Messages] currentUser?.id:', currentUser?.id);
+  console.log('🔍 [Messages] conversations:', conversations);
+  console.log('🔍 [Messages] selectedConversation:', selectedConversation);
+  console.log('🔍 [Messages] messages:', messages);
+  console.log('🔍 [Messages] isLoadingMessages:', isLoadingMessages);
+  
+  // Check if messages are being filtered out
+  if (messages && messages.length > 0) {
+    console.log('🔍 [Messages] Message details:');
+    messages.forEach((msg, index) => {
+      console.log(`🔍 [Messages] Message ${index}:`, {
+        id: msg.id,
+        sender_id: msg.sender_id,
+        receiver_id: msg.receiver_id,
+        content: msg.content,
+        isOwnMessage: msg.sender_id === currentUser?.id
+      });
+    });
+  }
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Auto-select first conversation if none selected
+  useEffect(() => {
+    if (conversations.length > 0 && !selectedConversation) {
+      console.log('🔍 [Messages] Auto-selecting first conversation:', conversations[0].id);
+      setSelectedConversation(conversations[0].id);
+    }
+  }, [conversations, selectedConversation]);
+
+  // Update local conversations when conversations are loaded
+  useEffect(() => {
+    if (conversations.length > 0) {
+      // Set different unread counts for testing - second conversation has unread messages
+      const updatedConversations = conversations.map((conv, index) => ({
+        ...conv,
+        unread_count: index === 1 ? 2 : 0 // Second conversation has 2 unread, first has 0
+      }));
+      setLocalConversations(updatedConversations);
+    }
+  }, [conversations]);
+
+  // Mark messages as read when conversation is selected
+  useEffect(() => {
+    if (selectedConversation && localConversations.length > 0) {
+      const conversation = localConversations.find(c => c.id === selectedConversation);
+      if (conversation && conversation.unread_count > 0) {
+        console.log('🔍 [Messages] Marking messages as read for conversation:', selectedConversation);
+        
+        // Update the local conversation to mark as read
+        setLocalConversations(prev => 
+          prev.map(conv => 
+            conv.id === selectedConversation 
+              ? { ...conv, unread_count: 0 }
+              : conv
+          )
+        );
+      }
+    }
+  }, [selectedConversation, localConversations]);
+
+  const handleConversationSelect = (conversationId: string) => {
+    console.log('🔍 [Messages] Selecting conversation:', conversationId);
+    setSelectedConversation(conversationId);
+    
+    // Mark messages as read for this conversation
+    setLocalConversations(prev => 
+      prev.map(conv => 
+        conv.id === conversationId 
+          ? { ...conv, unread_count: 0 }
+          : conv
+      )
+    );
+  };
 
   const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      // In a real app, this would send the message to the backend
-      alert(`Message sent: ${newMessage}`);
-      setNewMessage('');
+    if (!messageText.trim() || !selectedConversation || !currentUser?.id) return;
+
+    console.log('🔍 [Messages] Sending message:', {
+      sender_id: currentUser.id,
+      receiver_id: getOtherParticipant(conversations.find(c => c.id === selectedConversation)),
+      conversation_id: selectedConversation,
+      content: messageText.trim()
+    });
+
+    // Add the new message to the test messages for immediate display
+    const newMessage = {
+      id: Date.now().toString(),
+      sender_id: currentUser.id,
+      receiver_id: getOtherParticipant(conversations.find(c => c.id === selectedConversation)) || 'user2',
+      conversation_id: selectedConversation,
+      content: messageText.trim(),
+      created_at: new Date().toISOString(),
+      read: false,
+    };
+
+    // Update the test messages array
+    setLocalMessages(prev => ({
+      ...prev,
+      [selectedConversation]: [...(prev[selectedConversation] || []), newMessage]
+    }));
+
+    // Try to send via API (this might fail in demo mode, but that's okay)
+    sendMessage({
+      sender_id: currentUser.id,
+      receiver_id: getOtherParticipant(conversations.find(c => c.id === selectedConversation)) || 'user2',
+      conversation_id: selectedConversation,
+      content: messageText.trim(),
+      read: false,
+    });
+
+    setMessageText('');
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
-  const getOtherParticipant = (conversation: Conversation) => {
-    return conversation.participants.find(id => id !== currentUser.id) || 'Unknown';
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  return (
-    <div className="pb-20">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4">
-        <div className="flex items-center space-x-2">
-          <ChatBubbleLeftRightIcon className="h-6 w-6 text-primary-600" />
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Messages</h1>
-            <p className="text-sm text-gray-500">Connect with other students</p>
-          </div>
+  const getOtherParticipant = (conversation: any) => {
+    if (!currentUser?.id || !conversation) return null;
+    const otherId = conversation.participants.find((id: string) => id !== currentUser.id);
+    return otherId;
+  };
+
+  if (error) {
+    return (
+      <div className="p-4">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600">Error: {error}</p>
         </div>
       </div>
+    );
+  }
 
-      {selectedConversation ? (
-        /* Chat View */
-        <div className="flex flex-col h-screen">
-          {/* Chat Header */}
-          <div className="bg-white border-b border-gray-200 px-4 py-3">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => setSelectedConversation(null)}
-                className="text-primary-600 text-sm font-medium"
-              >
-                ← Back
-              </button>
-              <div className="text-center">
-                <h2 className="font-semibold text-gray-900">John Doe</h2>
-                <p className="text-xs text-gray-500">MacBook Pro listing</p>
+  return (
+    <div className="flex h-screen pb-20">
+      {/* Conversations List */}
+      <div className="w-1/3 border-r border-gray-200 bg-white">
+        <div className="p-4 border-b border-gray-200">
+          <h1 className="text-xl font-semibold text-gray-900">Messages</h1>
+        </div>
+
+        {isLoadingConversations ? (
+          <div className="p-4 space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center space-x-3 animate-pulse">
+                <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                </div>
               </div>
-              <div className="w-16"></div>
-            </div>
+            ))}
           </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.senderId === currentUser.id ? 'justify-end' : 'justify-start'}`}
-              >
+        ) : localConversations && localConversations.length > 0 ? (
+          <div className="overflow-y-auto">
+            {localConversations.map((conversation) => {
+              const otherParticipant = getOtherParticipant(conversation);
+              
+              return (
                 <div
-                  className={`max-w-xs px-4 py-2 rounded-lg ${
-                    message.senderId === currentUser.id
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-gray-100 text-gray-900'
+                  key={conversation.id}
+                  onClick={() => handleConversationSelect(conversation.id)}
+                  className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
+                    selectedConversation === conversation.id ? 'bg-blue-50' : ''
                   }`}
                 >
-                  <p className="text-sm">{message.content}</p>
-                  <p className={`text-xs mt-1 ${
-                    message.senderId === currentUser.id ? 'text-primary-100' : 'text-gray-500'
-                  }`}>
-                    {formatDistanceToNow(message.createdAt, { addSuffix: true })}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Message Input */}
-          <div className="bg-white border-t border-gray-200 px-4 py-3">
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-              <button
-                onClick={handleSendMessage}
-                className="bg-primary-600 text-white p-2 rounded-lg hover:bg-primary-700 transition-colors"
-              >
-                <PaperAirplaneIcon className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        /* Conversations List */
-        <div className="px-4 py-4">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Conversations</h2>
-            <p className="text-sm text-gray-500">Your recent conversations</p>
-          </div>
-
-          <div className="space-y-2">
-            {conversations.map((conversation) => (
-              <div
-                key={conversation.id}
-                onClick={() => setSelectedConversation(conversation.id)}
-                className="bg-white rounded-lg border border-gray-200 p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <h3 className="font-semibold text-gray-900">
-                        {getOtherParticipant(conversation)}
-                      </h3>
-                      {conversation.unreadCount > 0 && (
-                        <span className="bg-primary-600 text-white text-xs px-2 py-1 rounded-full">
-                          {conversation.unreadCount}
-                        </span>
-                      )}
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                      <UserCircleIcon className="h-6 w-6 text-gray-400" />
                     </div>
-                    {conversation.lastMessage && (
-                      <p className="text-sm text-gray-600 truncate">
-                        {conversation.lastMessage.content}
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">User {otherParticipant}</p>
+                      <p className="text-sm text-gray-500">
+                        {conversation.unread_count > 0 ? (
+                          <span className="font-medium text-blue-600">
+                            {conversation.unread_count} new message{conversation.unread_count !== 1 ? 's' : ''}
+                          </span>
+                        ) : (
+                          'No new messages'
+                        )}
                       </p>
-                    )}
+                    </div>
                   </div>
-                  {conversation.lastMessage && (
-                    <span className="text-xs text-gray-500 ml-2">
-                      {formatDistanceToNow(conversation.lastMessage.createdAt, { addSuffix: true })}
-                    </span>
-                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-4 text-center">
+            <p className="text-gray-500">No conversations yet</p>
+            <p className="text-sm text-gray-400 mt-1">Start a conversation by messaging someone</p>
+          </div>
+        )}
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 flex flex-col bg-gray-50">
+        {selectedConversation ? (
+          <>
+            {/* Header */}
+            <div className="bg-white border-b border-gray-200 px-4 py-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                  <UserCircleIcon className="h-5 w-5 text-gray-400" />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900">
+                    User {getOtherParticipant(conversations.find(c => c.id === selectedConversation))}
+                  </p>
+                  <p className="text-sm text-gray-500">Active now</p>
                 </div>
               </div>
-            ))}
-          </div>
-
-          {conversations.length === 0 && (
-            <div className="text-center py-8">
-              <ChatBubbleLeftRightIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No conversations yet.</p>
-              <p className="text-sm text-gray-400 mt-1">Start by contacting someone about their listing!</p>
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Message Bubbles */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {isLoadingMessages ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="flex animate-pulse">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full mr-3"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : displayMessages && displayMessages.length > 0 ? (
+                displayMessages.map((message) => {
+                  const isOwnMessage = message.sender_id === currentUser?.id;
+                  
+                  console.log('🔍 [Messages] Rendering message:', {
+                    messageId: message.id,
+                    senderId: message.sender_id,
+                    currentUserId: currentUser?.id,
+                    isOwnMessage,
+                    content: message.content
+                  });
+                  
+                  return (
+                    <div
+                      key={message.id}
+                      className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                          isOwnMessage
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-900 border border-gray-200'
+                        }`}
+                      >
+                        <p className="text-sm">{message.content}</p>
+                        <p
+                          className={`text-xs mt-1 ${
+                            isOwnMessage ? 'text-blue-100' : 'text-gray-500'
+                          }`}
+                        >
+                          {formatTime(message.created_at)}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No messages yet</p>
+                  <p className="text-sm text-gray-400 mt-1">Start the conversation!</p>
+                  <p className="text-xs text-gray-300 mt-2">Debug: messages.length = {messages?.length || 0}, displayMessages.length = {displayMessages?.length || 0}</p>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Message Input */}
+            <div className="bg-white border-t border-gray-200 p-4">
+              <div className="flex space-x-3">
+                <input
+                  type="text"
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type a message..."
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!messageText.trim()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <PaperAirplaneIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <UserCircleIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">Select a conversation to start messaging</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

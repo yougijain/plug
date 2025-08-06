@@ -5,11 +5,13 @@ export interface User {
   university: string;
   avatar?: string;
   verified: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Post {
   id: string;
-  userId: string;
+  user_id: string;
   type: 'item' | 'service' | 'ride' | 'ticket' | 'book' | 'sublet';
   title: string;
   description: string;
@@ -17,41 +19,51 @@ export interface Post {
   category: string;
   location: string;
   images?: string[];
-  createdAt: Date;
-  expiresAt?: Date;
+  created_at: string;
+  expires_at?: string;
   status: 'active' | 'sold' | 'expired';
   tags: string[];
-  isFlashDeal?: boolean;
-  flashDealExpiresAt?: Date;
+  is_flash_deal?: boolean;
+  flash_deal_expires_at?: string;
+  // Joined user data
+  users?: {
+    name: string;
+    avatar?: string;
+    university: string;
+  };
 }
 
 export interface Message {
   id: string;
-  senderId: string;
-  receiverId: string;
-  postId?: string;
+  sender_id: string;
+  receiver_id: string;
+  conversation_id: string;
+  post_id?: string;
   content: string;
-  createdAt: Date;
+  created_at: string;
   read: boolean;
 }
 
 export interface Conversation {
   id: string;
   participants: string[];
-  lastMessage?: Message;
-  unreadCount: number;
+  last_message_id?: string;
+  unread_count: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Ride {
   id: string;
-  driverId: string;
+  driver_id: string;
   origin: string;
   destination: string;
-  departureTime: Date;
-  availableSeats: number;
+  departure_time: string;
+  available_seats: number;
   price: number;
   description?: string;
   status: 'active' | 'full' | 'completed';
+  created_at: string;
 }
 
 export type TabType = 'home' | 'explore' | 'cruze' | 'live' | 'messages'; 

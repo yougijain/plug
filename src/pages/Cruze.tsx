@@ -9,39 +9,42 @@ interface CruzeProps {
 
 const Cruze: React.FC<CruzeProps> = ({ currentUser }) => {
   const [selectedTab, setSelectedTab] = useState<'find' | 'offer'>('find');
-  const [rides, setRides] = useState<Ride[]>([
+  const [rides] = useState<Ride[]>([
     {
       id: '1',
-      driverId: 'user1',
+      driver_id: 'user1',
       origin: 'Purdue Campus',
       destination: 'Indianapolis Airport',
-      departureTime: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
-      availableSeats: 2,
+      departure_time: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
+      available_seats: 2,
       price: 15,
       description: 'Heading to the airport for spring break. Clean car, good music!',
       status: 'active',
+      created_at: new Date().toISOString(),
     },
     {
       id: '2',
-      driverId: 'user2',
+      driver_id: 'user2',
       origin: 'Purdue Campus',
       destination: 'Chicago Downtown',
-      departureTime: new Date(Date.now() + 6 * 60 * 60 * 1000), // 6 hours from now
-      availableSeats: 1,
+      departure_time: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), // 6 hours from now
+      available_seats: 1,
       price: 25,
       description: 'Weekend trip to Chicago. Can drop off anywhere downtown.',
       status: 'active',
+      created_at: new Date().toISOString(),
     },
     {
       id: '3',
-      driverId: 'user3',
+      driver_id: 'user3',
       origin: 'Purdue Campus',
       destination: 'Indianapolis Downtown',
-      departureTime: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now
-      availableSeats: 3,
+      departure_time: new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString(), // 1 hour from now
+      available_seats: 3,
       price: 10,
       description: 'Quick trip to Indy. Flexible on pickup time.',
       status: 'active',
+      created_at: new Date().toISOString(),
     },
   ]);
 
@@ -59,7 +62,7 @@ const Cruze: React.FC<CruzeProps> = ({ currentUser }) => {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-4">
         <div className="flex items-center space-x-2">
-          <TruckIcon className="h-6 w-6 text-primary-600" />
+          <TruckIcon className="h-6 w-6 text-blue-600" />
           <div>
             <h1 className="text-xl font-bold text-gray-900">Campus Cruze</h1>
             <p className="text-sm text-gray-500">Find or offer rides</p>
@@ -74,7 +77,7 @@ const Cruze: React.FC<CruzeProps> = ({ currentUser }) => {
             onClick={() => setSelectedTab('find')}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               selectedTab === 'find'
-                ? 'bg-white text-primary-600 shadow-sm'
+                ? 'bg-white text-blue-600 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -84,7 +87,7 @@ const Cruze: React.FC<CruzeProps> = ({ currentUser }) => {
             onClick={() => setSelectedTab('offer')}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               selectedTab === 'offer'
-                ? 'bg-white text-primary-600 shadow-sm'
+                ? 'bg-white text-blue-600 shadow-sm'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -115,7 +118,7 @@ const Cruze: React.FC<CruzeProps> = ({ currentUser }) => {
                     <div className="flex items-center space-x-2 mb-2">
                       <ClockIcon className="h-4 w-4 text-gray-400" />
                       <span className="text-sm text-gray-600">
-                        {format(ride.departureTime, 'MMM d, h:mm a')}
+                        {format(new Date(ride.departure_time), 'MMM d, h:mm a')}
                       </span>
                     </div>
                     {ride.description && (
@@ -123,23 +126,23 @@ const Cruze: React.FC<CruzeProps> = ({ currentUser }) => {
                     )}
                   </div>
                   <div className="text-right">
-                    <span className="text-lg font-bold text-primary-600">${ride.price}</span>
+                    <span className="text-lg font-bold text-blue-600">${ride.price}</span>
                     <div className="flex items-center space-x-1 mt-1">
                       <UserGroupIcon className="h-4 w-4 text-gray-400" />
-                      <span className="text-xs text-gray-500">{ride.availableSeats} seat{ride.availableSeats !== 1 ? 's' : ''}</span>
+                      <span className="text-xs text-gray-500">{ride.available_seats} seat{ride.available_seats !== 1 ? 's' : ''}</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-500">
-                    {formatDistanceToNow(ride.departureTime, { addSuffix: true })}
+                    {formatDistanceToNow(new Date(ride.departure_time), { addSuffix: true })}
                   </span>
-                                     <button 
-                     onClick={() => handleRequestRide(ride.id)}
-                     className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors"
-                   >
-                     Request Ride
-                   </button>
+                  <button 
+                    onClick={() => handleRequestRide(ride.id)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Request Ride
+                  </button>
                 </div>
               </div>
             ))}
@@ -161,8 +164,8 @@ const Cruze: React.FC<CruzeProps> = ({ currentUser }) => {
             <p className="text-sm text-gray-500">Help fellow students and earn some gas money</p>
           </div>
 
-                     <div className="bg-white rounded-lg border border-gray-200 p-4">
-             <form onSubmit={handlePostRide} className="space-y-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <form onSubmit={handlePostRide} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   From
@@ -170,7 +173,7 @@ const Cruze: React.FC<CruzeProps> = ({ currentUser }) => {
                 <input
                   type="text"
                   placeholder="Pickup location"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -181,7 +184,7 @@ const Cruze: React.FC<CruzeProps> = ({ currentUser }) => {
                 <input
                   type="text"
                   placeholder="Destination"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -192,7 +195,7 @@ const Cruze: React.FC<CruzeProps> = ({ currentUser }) => {
                   </label>
                   <input
                     type="date"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -201,7 +204,7 @@ const Cruze: React.FC<CruzeProps> = ({ currentUser }) => {
                   </label>
                   <input
                     type="time"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -211,7 +214,7 @@ const Cruze: React.FC<CruzeProps> = ({ currentUser }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Available Seats
                   </label>
-                  <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                  <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option>1</option>
                     <option>2</option>
                     <option>3</option>
@@ -225,7 +228,7 @@ const Cruze: React.FC<CruzeProps> = ({ currentUser }) => {
                   <input
                     type="number"
                     placeholder="$0"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -237,13 +240,13 @@ const Cruze: React.FC<CruzeProps> = ({ currentUser }) => {
                 <textarea
                   placeholder="Tell passengers about your car, music preferences, etc."
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 Post Ride
               </button>
