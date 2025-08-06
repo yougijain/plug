@@ -95,22 +95,22 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-lightBlue-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Loop</h1>
-          <p className="text-gray-600">Connect with your university community</p>
+          <h1 className="text-3xl font-bold text-dark-900 mb-2">Welcome to Loop</h1>
+          <p className="text-dark-600">Connect with your university community</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-sm">{error}</p>
+          <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <p className="text-orange-600 text-sm">{error}</p>
           </div>
         )}
 
         {signUpSuccess && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-600 text-sm">Account created successfully!</p>
+          <div className="mb-6 p-4 bg-lightBlue-50 border border-lightBlue-200 rounded-lg">
+            <p className="text-blue-600 text-sm">Account created successfully!</p>
           </div>
         )}
 
@@ -119,8 +119,8 @@ const Login: React.FC = () => {
             onClick={() => setIsSignUp(false)}
             className={`flex-1 py-2 px-4 rounded-l-lg font-medium transition-colors ${
               !isSignUp
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-blue-500 text-white'
+                : 'bg-neutral-100 text-dark-600 hover:bg-neutral-200'
             }`}
           >
             Sign In
@@ -129,8 +129,8 @@ const Login: React.FC = () => {
             onClick={() => setIsSignUp(true)}
             className={`flex-1 py-2 px-4 rounded-r-lg font-medium transition-colors ${
               isSignUp
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-blue-500 text-white'
+                : 'bg-neutral-100 text-dark-600 hover:bg-neutral-200'
             }`}
           >
             Sign Up
@@ -140,70 +140,70 @@ const Login: React.FC = () => {
         {isSignUp ? (
           <form onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-dark-700 mb-1">
                 Full Name
               </label>
               <input
                 type="text"
                 {...signUpForm.register('name')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter your full name"
               />
               {signUpForm.formState.errors.name && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-orange-500 text-xs mt-1">
                   {signUpForm.formState.errors.name.message}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-dark-700 mb-1">
                 University
               </label>
               <select
                 {...signUpForm.register('university')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select your university</option>
                 <option value="Purdue University">Purdue University</option>
                 <option value="Indiana University">Indiana University</option>
               </select>
               {signUpForm.formState.errors.university && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-orange-500 text-xs mt-1">
                   {signUpForm.formState.errors.university.message}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-dark-700 mb-1">
                 Email
               </label>
               <input
                 type="email"
                 {...signUpForm.register('email')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter your email"
               />
               {signUpForm.formState.errors.email && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-orange-500 text-xs mt-1">
                   {signUpForm.formState.errors.email.message}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-dark-700 mb-1">
                 Password
               </label>
               <input
                 type="password"
                 {...signUpForm.register('password')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Create a password"
               />
               {signUpForm.formState.errors.password && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-orange-500 text-xs mt-1">
                   {signUpForm.formState.errors.password.message}
                 </p>
               )}
@@ -212,7 +212,7 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={isSigningUp}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSigningUp ? (
                 <div className="flex items-center justify-center">
@@ -227,34 +227,34 @@ const Login: React.FC = () => {
         ) : (
           <form onSubmit={signInForm.handleSubmit(onSignIn)} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-dark-700 mb-1">
                 Email
               </label>
               <input
                 type="email"
                 {...signInForm.register('email')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter your email"
               />
               {signInForm.formState.errors.email && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-orange-500 text-xs mt-1">
                   {signInForm.formState.errors.email.message}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-dark-700 mb-1">
                 Password
               </label>
               <input
                 type="password"
                 {...signInForm.register('password')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Enter your password"
               />
               {signInForm.formState.errors.password && (
-                <p className="text-red-500 text-xs mt-1">
+                <p className="text-orange-500 text-xs mt-1">
                   {signInForm.formState.errors.password.message}
                 </p>
               )}
@@ -263,7 +263,7 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={isSigningIn}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSigningIn ? (
                 <div className="flex items-center justify-center">
@@ -278,11 +278,11 @@ const Login: React.FC = () => {
         )}
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-dark-600">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
             <button
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="text-blue-500 hover:text-blue-600 font-medium"
             >
               {isSignUp ? 'Sign In' : 'Sign Up'}
             </button>

@@ -1,4 +1,5 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { auth } from '../lib/supabase'
 import { userApi } from '../lib/api'
 import { useAppStore } from '../lib/store'
@@ -172,34 +173,33 @@ export const useAuth = () => {
     }
   })
 
-  const { data: currentUserData, isLoading, error } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: async () => {
-      console.log('🔍 [useAuth.currentUserQuery] Starting current user query...')
-      
-      try {
-        console.log('🔍 [useAuth.currentUserQuery] Calling userApi.getCurrentUser...')
-        const user = await userApi.getCurrentUser()
-        console.log('✅ [useAuth.currentUserQuery] Current user query successful:', user)
-        return user
-      } catch (err) {
-        console.error('❌ [useAuth.currentUserQuery] Exception:', err)
-        throw err
+  // Initialize current user if not set (for demo mode)
+  useEffect(() => {
+    if (!currentUser) {
+      console.log('🔍 [useAuth] No current user, checking for demo mode...')
+      const checkDemoUser = async () => {
+        try {
+          const user = await userApi.getCurrentUser()
+          if (user) {
+            console.log('🔍 [useAuth] Setting demo user:', user)
+            setCurrentUser(user)
+          }
+        } catch (err) {
+          console.log('🔍 [useAuth] No user found, staying logged out')
+        }
       }
-    },
-    enabled: !!currentUser
-  })
+      checkDemoUser()
+    }
+  }, [currentUser, setCurrentUser])
 
   // Debug current user state
   console.log('🔍 [useAuth] currentUser from store:', currentUser)
-  console.log('🔍 [useAuth] currentUserData from query:', currentUserData)
-  console.log('🔍 [useAuth] query enabled:', !!currentUser)
   console.log('🔍 [useAuth] signOutMutation.isPending:', signOutMutation.isPending)
 
   return {
     currentUser,
-    isLoading,
-    error,
+    isLoading: signUpMutation.isPending || signInMutation.isPending || signOutMutation.isPending,
+    error: null,
     signUp: signUpMutation.mutate,
     signIn: signInMutation.mutate,
     signOut: signOutMutation.mutate,

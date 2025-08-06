@@ -1,159 +1,68 @@
-# Loop - University Community App
+# Loop - University Marketplace App
 
-A modern React-based marketplace and community platform for university students, built with TypeScript, Tailwind CSS, and Supabase.
+A modern, mobile-first marketplace app for university students to buy, sell, and trade items, services, and rides.
+
+## 🎨 Color Palette
+
+The app uses a carefully designed color palette built around blue and orange with neutral tones:
+
+| Color | Hex | Usage | Purpose |
+|-------|-----|-------|---------|
+| ⚪️ Light Neutral | #F7F7F7 | 60% | Page backgrounds |
+| 🖤 Dark Neutral | #333333 | - | Text/Iconography |
+| 🔵 Primary Blue | #1678F2 | 25% | Header/nav, cards |
+| 🌐 Light Blue | #56A9FF | 5% | Secondary buttons, links |
+| 🟠 Accent Orange | #FF8200 | 7% | Primary CTAs, badges |
+| 🟡 Light Orange | #FFC273 | 3% | Hover/pressed states |
 
 ## 🚀 Features
 
-- **Authentication**: Secure sign-up/sign-in with Supabase Auth
-- **Marketplace**: Buy, sell, and trade items, services, and rides
-- **Real-time Updates**: Live activity feed with flash deals
-- **Ride Sharing**: Find and offer rides to campus destinations
-- **Messaging**: Direct communication between users
-- **Responsive Design**: Mobile-first interface with Tailwind CSS
-- **Type Safety**: Full TypeScript implementation
+- **Authentication**: Secure sign-up/sign-in with Supabase
+- **Posts**: Create and browse marketplace posts
+- **Search & Filter**: Find items by category and keywords
+- **Real-time Updates**: Live updates using Supabase subscriptions
+- **Mobile-First Design**: Optimized for mobile devices
+- **Demo Mode**: Works without database connection
 
-## 🛠️ Tech Stack
+## 🛠 Tech Stack
 
 - **Frontend**: React 18, TypeScript, Tailwind CSS
-- **State Management**: Zustand, React Query (TanStack Query)
 - **Backend**: Supabase (PostgreSQL, Auth, Real-time)
-- **Routing**: React Router DOM
+- **State Management**: Zustand, React Query
 - **Forms**: React Hook Form with Zod validation
-- **Icons**: Heroicons
+- **Icons**: Heroicons, Lucide React
 
-## 📋 Prerequisites
+## 📱 Pages
 
-- Node.js 16+ 
-- npm or yarn
-- Supabase account (for full features)
+- **Home**: Browse and create posts
+- **Explore**: Search and filter posts
+- **Cruze**: Ride sharing functionality
+- **Live Now**: Real-time activity feed
+- **Messages**: Chat with other users
+- **Login**: Authentication
 
-## ⚡ Quick Start
+## 🎯 Design Principles
 
-### 1. Clone and Install
+- **60-30-10 Rule**: Neutrals (60%), Blue (30%), Orange (10%)
+- **Complementary Harmony**: Blue (trust) vs Orange (action)
+- **Accessible**: All text meets ≥4.5:1 contrast ratio
+- **Mobile-First**: Optimized for mobile devices
 
-```bash
-git clone <repository-url>
-cd loop
-npm install
-```
+## 🚀 Getting Started
 
-### 2. Environment Setup
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up environment variables (see `.env.example`)
+4. Start development server: `npm start`
 
-#### Option A: Demo Mode (No Setup Required)
-The app will run in demo mode without Supabase credentials, showing sample data.
+## 🧹 Recent Cleanup
 
-#### Option B: Full Features (Supabase Setup)
-1. Create a Supabase project at [supabase.com](https://supabase.com)
-2. Copy your project URL and anon key
-3. Create a `.env` file in the root directory:
-
-```env
-REACT_APP_SUPABASE_URL=your_supabase_project_url
-REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-### 3. Start Development Server
-
-```bash
-npm start
-```
-
-The app will open at `http://localhost:3000`
-
-## 🎯 Demo Mode
-
-When running without Supabase credentials, the app automatically enters **Demo Mode**:
-
-- ✅ **All UI features work** - Navigation, pages, components
-- ✅ **Sample data** - Mock posts, rides, messages
-- ✅ **Responsive design** - Mobile-first interface
-- ⚠️ **No real authentication** - Uses demo user
-- ⚠️ **No database persistence** - Data resets on refresh
-
-**Demo Mode Banner**: You'll see a yellow banner indicating demo mode is active.
-
-## 🔧 Development
-
-### Available Scripts
-
-- `npm start` - Start development server
-- `npm run build` - Create production build
-- `npm test` - Run tests
-- `npm run eject` - Eject from Create React App
-
-### Project Structure
-
-```
-src/
-├── components/     # Reusable UI components
-├── hooks/         # Custom React hooks
-├── lib/           # Utilities, API, store
-├── pages/         # Page components
-├── types/         # TypeScript type definitions
-└── App.tsx        # Main app component
-```
-
-## 🐛 Recent Bug Fixes
-
-- ✅ **TypeScript compatibility** - Updated to v5.0+ for Zod v4
-- ✅ **Type inconsistencies** - Aligned all types with database schema
-- ✅ **Navigation styling** - Fixed color references
-- ✅ **Authentication flow** - Centralized auth state management
-- ✅ **Demo mode** - Added fallback for missing Supabase credentials
-- ✅ **React Hook warnings** - Fixed all dependency arrays
-- ✅ **ESLint warnings** - Cleaned up unused imports and variables
-
-## 🔐 Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `REACT_APP_SUPABASE_URL` | Your Supabase project URL | For full features |
-| `REACT_APP_SUPABASE_ANON_KEY` | Your Supabase anon key | For full features |
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-1. Connect your GitHub repository to Vercel
-2. Add environment variables in Vercel dashboard
-3. Deploy automatically on push
-
-### Netlify
-
-1. Build the project: `npm run build`
-2. Upload the `build` folder to Netlify
-3. Add environment variables in Netlify dashboard
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 🆘 Troubleshooting
-
-### Common Issues
-
-**Blank Page**: 
-- Check browser console for errors
-- Ensure all dependencies are installed
-- Verify environment variables (if using Supabase)
-
-**Build Errors**:
-- Clear node_modules and reinstall: `rm -rf node_modules && npm install`
-- Check TypeScript version compatibility
-
-**Authentication Issues**:
-- Verify Supabase credentials in `.env`
-- Check Supabase project settings
-- Ensure RLS policies are configured
+- Removed unnecessary SQL test files
+- Cleaned up test documentation
+- Updated color palette to blue/orange theme
+- Simplified file structure
+- Improved code organization
 
 ## 📄 License
 
-This project is licensed under the MIT License.
-
----
-
-**Built with ❤️ for university communities** 
+MIT License 
