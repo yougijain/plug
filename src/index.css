@@ -10,6 +10,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* FAB subtle pulse */
+.fab-pulse {
+  animation: fabPulse 5s ease-in-out infinite;
+}
+@keyframes fabPulse {
+  0%, 92%, 100% { transform: translateY(-0.5rem) scale(1); }
+  95% { transform: translateY(-0.5rem) scale(1.05); }
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;

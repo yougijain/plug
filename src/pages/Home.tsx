@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { usePosts } from '../hooks/usePosts';
-import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/outline';
 
 const Home: React.FC = () => {
-  const { currentUser, signOut } = useAuth();
+  const { currentUser } = useAuth();
   const { posts, isLoading, error, createPost, isCreatingPost } = usePosts();
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  // Category filter UI placeholder; full filter sheet can be added later
+  const [selectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -17,10 +18,6 @@ const Home: React.FC = () => {
     type: 'item' as 'item' | 'service' | 'ride' | 'ticket' | 'book' | 'sublet',
     location: '',
   });
-
-  const handleSignOut = () => {
-    signOut();
-  };
 
   // Post modal replaced by FAB flow
 
@@ -159,74 +156,76 @@ const Home: React.FC = () => {
 
 
 
-  const categories = ['all', 'Electronics', 'Books', 'Furniture', 'Clothing', 'Sports', 'Other'];
+  // const categories = ['all', 'Electronics', 'Books', 'Furniture', 'Clothing', 'Sports', 'Other'];
 
   return (
-    <div className="pb-20">
-
-      
+    <div className="pb-20 bg-brandOffWhite">
       {/* Header */}
-      <div className="bg-brandNavy px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="bg-brandNavy" style={{ height: 64 }}>
+        <div className="h-full flex items-center justify-between px-4">
           <div>
-            <h1 className="text-xl font-bold text-white">Plug</h1>
-            <p className="text-xs text-brandYellow">Your Campus, Connected.</p>
+            <h1 className="text-[18px] font-bold text-white leading-tight">Plug</h1>
+            <p className="text-[12px] font-semibold text-[#D8E1EE]">Your Campus, Connected.</p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
+            {/* Notifications with badge */}
             <button
               onClick={handleTestDatabase}
-              className="text-white/80 hover:text-white text-sm"
+              className="relative text-white/90 hover:text-white"
               title="Notifications"
+              aria-label="Notifications"
             >
               🔔
+              <span className="absolute -top-1 -right-2 h-3.5 w-3.5 rounded-full bg-brandOrange text-white text-[10px] leading-3 flex items-center justify-center font-semibold">1</span>
             </button>
-            <button
-              onClick={() => (window.location.href = '/cart')}
-              className="h-8 px-3 rounded-full bg-white text-brandNavy text-sm font-semibold"
-              title="Cart"
-            >
-              Cart
-            </button>
+            {/* Optional heart icon access */}
+            {/* <button onClick={() => (window.location.href = '/saved')} className="text-white/90 hover:text-white" aria-label="Saved">♥</button> */}
           </div>
         </div>
       </div>
 
-      {/* Search and Filter */}
-      <div className="bg-white border-b border-neutral-200 px-4 py-3">
-        <div className="flex space-x-2">
+      {/* Plug of the Day first */}
+      <div className="px-4 mt-4">
+        <div className="rounded-xl shadow-md bg-white border border-neutral-200">
+          <div className="bg-brandYellow h-7 rounded-t-xl flex items-center px-2">
+            <span className="text-brandNavy font-semibold text-[14px]">🔥 Plug of the Day</span>
+          </div>
+          {/* Optional image area */}
+          <div className="w-full aspect-video bg-brandOffWhite" />
+          <div className="p-4">
+            <p className="text-[14px] leading-relaxed text-dark-600">Today’s top campus deal handpicked for you.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Search and Filter under Plug */}
+      <div className="px-4 mt-4">
+        <div className="flex items-center space-x-2">
           <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[#8A8A8A]" />
             <input
               type="text"
-              placeholder="Search posts..."
+              placeholder="Search everything on campus…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 h-10 border border-[#E6E9EE] rounded-xl focus:ring-1 focus:ring-brandOrange focus:border-brandOrange text-[14px]"
             />
           </div>
-          <div className="relative">
-            <FunnelIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400" />
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-            >
-              {categories.map(category => (
-                <option key={category} value={category}>
-                  {category === 'all' ? 'All Categories' : category}
-                </option>
-              ))}
-            </select>
-          </div>
+          <button className="flex items-center space-x-2 h-10 px-3 rounded-xl bg-white text-brandNavy text-[14px] font-semibold border border-[#E6E9EE]">
+            <FunnelIcon className="h-5 w-5" />
+            <span>All Categories</span>
+          </button>
         </div>
       </div>
 
       {/* Plug of the Day */}
       <div className="px-4 mt-4">
-        <div className="bg-white rounded-xl shadow-md border border-neutral-200 overflow-hidden">
-          <div className="bg-brandYellow text-brandNavy text-xs font-semibold px-3 py-1">Plug of the Day</div>
+        <div className="rounded-xl shadow-md bg-white border border-neutral-200">
+          <div className="bg-brandYellow h-7 rounded-t-xl flex items-center px-2">
+            <span className="text-brandNavy font-semibold text-[14px]">🔥 Plug of the Day</span>
+          </div>
           <div className="p-4">
-            <p className="text-sm text-dark-700">Today’s top campus deal handpicked for you.</p>
+            <p className="text-[14px] leading-relaxed text-dark-600">Today’s top campus deal handpicked for you.</p>
           </div>
         </div>
       </div>
@@ -249,9 +248,12 @@ const Home: React.FC = () => {
             <p className="text-orange-600">Error: {error?.message || 'Unknown error'}</p>
           </div>
         ) : filteredPosts.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-dark-500">No posts found</p>
-            <p className="text-sm text-dark-400 mt-1">Try adjusting your search or filters</p>
+          <div className="text-center py-10">
+            {/* Simple placeholder illustration substitute */}
+            <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-brandOffWhite border border-neutral-300 flex items-center justify-center">📱</div>
+            <p className="text-[18px] font-semibold text-brandNavy">Be the first to post 📸</p>
+            <p className="text-[14px] text-dark-500 max-w-[240px] mx-auto mt-1">Your deal could be today’s Plug of the Day!</p>
+            <button onClick={() => (window.location.href = '/post')} className="mt-4 inline-flex items-center rounded-full bg-brandOrange text-white px-5 py-2 text-[14px] font-semibold">Post Something</button>
           </div>
         ) : (
           <div className="space-y-4">

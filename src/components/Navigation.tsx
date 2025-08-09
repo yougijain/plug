@@ -57,7 +57,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <button
             onClick={() => onTabChange('post')}
-            className="pointer-events-auto -mt-8 h-14 w-14 rounded-full bg-brandOrange text-white shadow-lg flex items-center justify-center hover:brightness-110 active:scale-95 transition"
+            className="pointer-events-auto -mt-8 h-14 w-14 rounded-full bg-brandOrange text-white shadow-xl flex items-center justify-center hover:brightness-110 active:scale-95 transition fab-pulse"
             aria-label="Post"
           >
             <PlusIcon className="h-7 w-7" />

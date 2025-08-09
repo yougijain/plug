@@ -8,6 +8,7 @@ import Cruze from './pages/Cruze';
 import LiveNow from './pages/LiveNow';
 import Post from './pages/Post';
 import Cart from './pages/Cart';
+import Saved from './pages/Saved';
 import Messages from './pages/Messages';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
@@ -129,6 +130,7 @@ const AppContent: React.FC = () => {
           <Route path="/post" element={<Post />} />
           <Route path="/messages" element={<Messages />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/saved" element={<Saved />} />
           <Route path="/profile" element={<Profile />} />
         </Routes>
         <Navigation activeTab={getActiveTab()} onTabChange={handleTabChange} />

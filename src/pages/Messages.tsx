@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useConversations, useMessages } from '../hooks/useMessages';
 import { useAppStore } from '../lib/store';
-import { PaperAirplaneIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { PaperAirplaneIcon, UserCircleIcon, MagnifyingGlassIcon, ChevronLeftIcon, EllipsisHorizontalIcon, CameraIcon, PlusIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 
 const Messages: React.FC = () => {
   const { currentUser } = useAuth();
@@ -48,6 +48,25 @@ const Messages: React.FC = () => {
 
   // Use local messages for the selected conversation
   const displayMessages = selectedConversation ? (localMessages[selectedConversation] || []) : [];
+
+  // Derived conversations with last message/time and sorting (unread first, newest next)
+  const listItems = useMemo(() => {
+    const items = conversations.map((c: any) => {
+      const msgs = localMessages[c.id] || [];
+      const last = msgs[msgs.length - 1];
+      return {
+        ...c,
+        lastMessage: last?.content || 'Tap to view',
+        lastTime: last?.created_at || c.updated_at,
+      };
+    });
+    return items.sort((a: any, b: any) => {
+      const unreadA = a.unread_count > 0 ? 1 : 0;
+      const unreadB = b.unread_count > 0 ? 1 : 0;
+      if (unreadA !== unreadB) return unreadB - unreadA;
+      return new Date(b.lastTime || 0).getTime() - new Date(a.lastTime || 0).getTime();
+    });
+  }, [conversations, localMessages]);
 
   // Debug logs
   console.log('🔍 [Messages] currentUser:', currentUser);
@@ -199,179 +218,143 @@ const Messages: React.FC = () => {
     );
   }
 
-  return (
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden">
-      {/* Conversations List */}
-      <div className="w-1/3 border-r border-gray-200 bg-white h-full flex flex-col">
-        <div className="p-4 border-b border-gray-200 bg-brandNavy text-white shrink-0">
-          <h1 className="text-xl font-semibold">Messages</h1>
+  // Mobile-first: list or thread view
+  const renderList = (
+    <div className="min-h-[calc(100vh-64px)] bg-brandOffWhite">
+      <div className="px-4 py-3 bg-white border-b border-neutral-200 flex items-center justify-between">
+        <h1 className="text-[18px] font-bold text-brandNavy">Messages</h1>
+        <MagnifyingGlassIcon className="h-5 w-5 text-dark-600" />
+      </div>
+      {isLoadingConversations ? (
+        <div className="p-4 space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white rounded-lg p-3 border border-neutral-200 animate-pulse h-16" />
+          ))}
         </div>
-
-        {isLoadingConversations ? (
-          <div className="p-4 space-y-4 overflow-y-auto">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="flex items-center space-x-3 animate-pulse">
-                <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
-                <div className="flex-1">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+      ) : listItems.length > 0 ? (
+        <div className="p-2">
+          {listItems.map((conversation: any) => {
+            const otherParticipant = getOtherParticipant(conversation);
+            return (
+              <button
+                key={conversation.id}
+                onClick={() => handleConversationSelect(conversation.id)}
+                className="w-full text-left bg-white rounded-xl border border-neutral-200 p-3 mb-3 flex items-center"
+              >
+                <div className="h-11 w-11 rounded-full bg-brandOffWhite flex items-center justify-center mr-3">
+                  <UserCircleIcon className="h-6 w-6 text-dark-400" />
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : localConversations && localConversations.length > 0 ? (
-          <div className="overflow-y-auto flex-1">
-            {localConversations.map((conversation) => {
-              const otherParticipant = getOtherParticipant(conversation);
-              
-              return (
-                <div
-                  key={conversation.id}
-                  onClick={() => handleConversationSelect(conversation.id)}
-                  className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
-                    selectedConversation === conversation.id ? 'bg-blue-50' : ''
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                      <UserCircleIcon className="h-6 w-6 text-gray-400" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900">User {otherParticipant}</p>
-                      <p className="text-sm text-gray-500">
-                        {conversation.unread_count > 0 ? (
-                          <span className="font-medium text-blue-600">
-                            {conversation.unread_count} new message{conversation.unread_count !== 1 ? 's' : ''}
-                          </span>
-                        ) : (
-                          'No new messages'
-                        )}
-                      </p>
-                    </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[15px] font-bold text-brandNavy truncate">User {otherParticipant}</p>
+                    <span className="text-[12px] text-dark-400">{new Date(conversation.lastTime||Date.now()).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                  </div>
+                  <p className="text-[13px] text-dark-600 truncate">{conversation.lastMessage}</p>
+                  <div className="mt-1 flex items-center justify-between">
+                    <div className="text-[12px] text-dark-600 truncate">Listing • $—</div>
+                    {conversation.unread_count > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-brandMint text-brandNavy text-[12px] font-semibold">{conversation.unread_count} new</span>
+                    )}
                   </div>
                 </div>
-              );
-            })}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="p-8 text-center text-dark-600">No conversations yet</div>
+      )}
+    </div>
+  );
+
+  const renderThread = (
+    <div className="min-h-[calc(100vh-64px)] bg-brandOffWhite flex flex-col">
+      {/* Thread Header */}
+      <div className="bg-brandNavy text-white px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <button onClick={() => setSelectedConversation(null)} aria-label="Back">
+            <ChevronLeftIcon className="h-6 w-6" />
+          </button>
+          <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
+            <UserCircleIcon className="h-6 w-6 text-white" />
           </div>
-        ) : (
-          <div className="p-4 text-center">
-            <p className="text-gray-500">No conversations yet</p>
-            <p className="text-sm text-gray-400 mt-1">Start a conversation by messaging someone</p>
+          <div>
+            <p className="text-[16px] font-bold leading-tight">User {getOtherParticipant(conversations.find(c => c.id === selectedConversation))}</p>
+            <p className="text-[12px] text-[#D8E1EE]">Active now</p>
           </div>
-        )}
+        </div>
+        <button aria-label="More"><EllipsisHorizontalIcon className="h-6 w-6" /></button>
+      </div>
+
+      {/* Pinned listing bar (placeholder) */}
+      <div className="px-4 pt-3">
+        <div className="bg-white rounded-xl border border-neutral-200 shadow p-3 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="h-12 w-12 rounded-lg bg-brandOffWhite" />
+            <div>
+              <p className="text-[14px] font-semibold text-brandNavy">Listing title</p>
+              <p className="text-[14px] font-bold text-brandNavy">$—</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button className="h-9 px-3 rounded-lg border border-neutral-300 text-brandNavy text-sm font-semibold">Make offer</button>
+            <button className="h-9 px-3 rounded-lg bg-brandOrange text-white text-sm font-semibold">Mark as sold</button>
+          </div>
+        </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 flex flex-col bg-gray-50 h-full">
-        {selectedConversation ? (
-          <>
-            {/* Header */}
-            <div className="bg-white border-b border-gray-200 px-4 py-3 shrink-0">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                  <UserCircleIcon className="h-5 w-5 text-gray-400" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">
-                    User {getOtherParticipant(conversations.find(c => c.id === selectedConversation))}
-                  </p>
-                  <p className="text-sm text-gray-500">Active now</p>
-                </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {displayMessages.map((message) => {
+          const isOwnMessage = message.sender_id === currentUser?.id;
+          return (
+            <div key={message.id} className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[78%] break-words px-4 py-2 rounded-2xl ${isOwnMessage ? 'bg-white border border-[#E6E9EE] text-brandNavy' : 'bg-[#EEF2F7] text-brandNavy'}`}>
+                <p className="text-[14px]">{message.content}</p>
+                <p className="text-[11px] text-[#8A8A8A] mt-1 text-right">{formatTime(message.created_at)} • ✓✓</p>
               </div>
             </div>
+          )
+        })}
+        <div ref={messagesEndRef} />
+      </div>
 
-            {/* Message Bubbles */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {isLoadingMessages ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="flex animate-pulse">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full mr-3"></div>
-                      <div className="flex-1">
-                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : displayMessages && displayMessages.length > 0 ? (
-                displayMessages.map((message) => {
-                  const isOwnMessage = message.sender_id === currentUser?.id;
-                  
-                  console.log('🔍 [Messages] Rendering message:', {
-                    messageId: message.id,
-                    senderId: message.sender_id,
-                    currentUserId: currentUser?.id,
-                    isOwnMessage,
-                    content: message.content
-                  });
-                  
-                  return (
-                    <div
-                      key={message.id}
-                      className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[80%] break-words px-4 py-2 rounded-lg ${
-                          isOwnMessage
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white text-gray-900 border border-gray-200'
-                        }`}
-                      >
-                        <p className="text-sm">{message.content}</p>
-                        <p
-                          className={`text-xs mt-1 ${
-                            isOwnMessage ? 'text-blue-100' : 'text-gray-500'
-                          }`}
-                        >
-                          {formatTime(message.created_at)}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No messages yet</p>
-                  <p className="text-sm text-gray-400 mt-1">Start the conversation!</p>
-                  <p className="text-xs text-gray-300 mt-2">Debug: messages.length = {messages?.length || 0}, displayMessages.length = {displayMessages?.length || 0}</p>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
+      {/* Quick replies */}
+      <div className="px-4 pb-2">
+        <div className="flex flex-wrap gap-2">
+          {["Still available?","Can meet today?","Offer $XX"].map((q) => (
+            <button key={q} onClick={() => setMessageText(q)} className="h-8 px-3 rounded-full bg-brandOffWhite border border-neutral-300 text-brandNavy text-sm">{q}</button>
+          ))}
+        </div>
+      </div>
 
-            {/* Message Input */}
-            <div className="bg-white border-t border-gray-200 p-4 shrink-0">
-              <div className="flex space-x-3">
-                <input
-                  type="text"
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Type a message..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={!messageText.trim()}
-                  className="px-4 py-2 bg-brandOrange text-white rounded-lg hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <PaperAirplaneIcon className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <UserCircleIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Select a conversation to start messaging</p>
-            </div>
-          </div>
-        )}
+      {/* Composer */}
+      <div className="px-4 pb-4">
+        <div className="bg-white rounded-full shadow border border-neutral-200 h-14 px-3 flex items-center space-x-2">
+          <button aria-label="Attachment"><PlusIcon className="h-5 w-5 text-dark-500" /></button>
+          <button aria-label="Camera"><CameraIcon className="h-5 w-5 text-dark-500" /></button>
+          <input
+            type="text"
+            value={messageText}
+            onChange={(e) => setMessageText(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Type a message…"
+            className="flex-1 px-2 outline-none text-[14px]"
+          />
+          <button aria-label="Offer"><CurrencyDollarIcon className="h-5 w-5 text-dark-500" /></button>
+          <button
+            onClick={handleSendMessage}
+            disabled={!messageText.trim()}
+            className={`h-9 w-9 rounded-full flex items-center justify-center ${messageText.trim() ? 'bg-brandOrange text-white' : 'bg-brandOrange/30 text-white/70 cursor-not-allowed'}`}
+          >
+            <PaperAirplaneIcon className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </div>
   );
+
+  return selectedConversation ? renderThread : renderList;
 };
 
 export default Messages; 
