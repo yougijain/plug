@@ -66,4 +66,4 @@ export interface Ride {
   created_at: string;
 }
 
-export type TabType = 'home' | 'explore' | 'cruze' | 'live' | 'messages'; 
+export type TabType = 'home' | 'live' | 'profile' | 'messages' | 'post';

@@ -5,16 +5,18 @@ import { z } from 'zod';
 import { useAuth } from '../hooks/useAuth';
 import { useAppStore } from '../lib/store';
 
+const ALLOWED_UNIVERSITIES = ['Purdue University', 'Indiana University'] as const;
+
 const signUpSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  university: z.union([
-    z.literal(''),
-    z.enum(['Purdue University', 'Indiana University'])
-  ]).refine((val) => val !== '', {
-    message: 'Please select your university',
-  }),
+  university: z
+    .string()
+    .min(1, 'Please select your university')
+    .refine((val) => (ALLOWED_UNIVERSITIES as readonly string[]).includes(val), {
+      message: 'Please select your university',
+    }),
 });
 
 const signInSchema = z.object({

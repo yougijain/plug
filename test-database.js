@@ -1,6 +1,7 @@
 // Test script to check database connection
 // Run this with: node test-database.js
 
+require('dotenv').config();
 const { createClient } = require('@supabase/supabase-js');
 
 // Get environment variables
@@ -37,7 +38,7 @@ async function testDatabase() {
   try {
     // Test 1: Check if we can connect
     console.log('1. Testing connection...');
-    const { data, error } = await supabase.from('posts').select('count').limit(1);
+    const { data, error } = await supabase.from('posts').select('id').limit(1);
     
     if (error) {
       console.error('❌ Connection failed:', error.message);

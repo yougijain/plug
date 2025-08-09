@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Post } from '../types/index';
+import { useAppStore } from '../lib/store';
 import { formatDistanceToNow } from 'date-fns';
 import { BoltIcon, FireIcon, ClockIcon } from '@heroicons/react/24/outline';
 
@@ -9,6 +11,8 @@ interface LiveNowProps {
 
 const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const navigate = useNavigate();
+  const { savePost, addToCart } = useAppStore();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Mock data for MVP - simulating real-time updates
@@ -110,11 +114,16 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
   };
 
   const handleContact = (postId: string) => {
-    alert(`Contacting seller for post ${postId}`);
+    // Navigate to messages and preselect conversation in a future enhancement
+    navigate('/messages');
   };
 
   const handleSave = (postId: string) => {
-    alert(`Saved post ${postId}`);
+    const target = posts.find(p => p.id === postId);
+    if (target) {
+      savePost(target);
+      addToCart(target);
+    }
   };
 
   return (
@@ -151,7 +160,7 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
           {posts.map((post) => (
             <div key={post.id} className="bg-white rounded-lg border border-gray-200 p-4 relative">
               {post.is_flash_deal && (
-                <div className="absolute top-2 right-2 flex items-center space-x-1 bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs">
+                <div className="absolute top-2 right-2 flex items-center space-x-1 bg-brandOrange text-white px-2 py-1 rounded-full text-xs animate-pulse">
                   <FireIcon className="h-3 w-3" />
                   <span>Flash Deal</span>
                 </div>
@@ -178,10 +187,10 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
               </div>
               
               {post.is_flash_deal && post.flash_deal_expires_at && (
-                <div className="mt-2 p-2 bg-red-50 rounded-lg">
+                <div className="mt-2 p-2 bg-brandOffWhite rounded-lg">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-red-600 font-medium">Flash Deal Expires</span>
-                    <span className="text-red-500">
+                    <span className="text-brandOrange font-medium">Ends</span>
+                    <span className="text-brandNavy">
                       {formatDistanceToNow(new Date(post.flash_deal_expires_at), { addSuffix: true })}
                     </span>
                   </div>
@@ -194,7 +203,7 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
                     key={tag}
                     className={`px-2 py-1 rounded-full text-xs ${
                       tag.includes('urgent') || tag.includes('flash-deal')
-                        ? 'bg-red-100 text-red-600'
+                        ? 'bg-brandYellow text-brandNavy'
                         : 'bg-gray-100 text-gray-600'
                     }`}
                   >

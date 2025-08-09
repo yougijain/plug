@@ -129,19 +129,28 @@ export const userApi = {
     }
   },
 
-  createUser: async (userData: Omit<User, 'id' | 'created_at' | 'updated_at'>) => {
-    console.log('🔍 [userApi.createUser] Starting...', userData)
+  createUser: async (
+    params: { id: string } & Omit<User, 'id' | 'created_at' | 'updated_at'>
+  ) => {
+    console.log('🔍 [userApi.createUser] Starting...', params)
     
     if (isDemoMode) {
       console.log('🔍 [userApi.createUser] Returning demo user')
-      return { ...userData, id: 'demo-user-1', created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+      return { ...params, id: 'demo-user-1', created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
     }
     
     try {
       console.log('🔍 [userApi.createUser] Inserting user into database...')
       const { data, error } = await supabase
         .from('users')
-        .insert(userData)
+        .insert({
+          id: params.id,
+          email: params.email,
+          name: params.name,
+          university: params.university,
+          avatar: params.avatar,
+          verified: params.verified ?? false,
+        })
         .select()
         .single()
       
@@ -764,7 +773,7 @@ export const testSupabaseConnection = async () => {
     console.log('🔍 [testSupabaseConnection] Testing basic query...')
     const { error } = await supabase
       .from('users')
-      .select('count')
+      .select('id')
       .limit(1)
     
     if (error) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { usePosts } from '../hooks/usePosts';
-import { PlusIcon, MagnifyingGlassIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 const Home: React.FC = () => {
   const { currentUser, signOut } = useAuth();
@@ -22,10 +22,7 @@ const Home: React.FC = () => {
     signOut();
   };
 
-  const handleCreatePost = () => {
-    console.log('🔍 [Home] Create post button clicked');
-    setShowCreateModal(true);
-  };
+  // Post modal replaced by FAB flow
 
   const handleTestDatabase = async () => {
     console.log('🔍 [Home] Testing database connection...');
@@ -33,8 +30,8 @@ const Home: React.FC = () => {
       // Import supabase client
       const { supabase } = await import('../lib/supabase');
       
-             // Test connection
-       const { error } = await supabase.from('posts').select('count').limit(1);
+      // Test connection by selecting a simple column
+      const { error } = await supabase.from('posts').select('id').limit(1);
       
       if (error) {
         console.error('❌ Database test failed:', error);
@@ -169,33 +166,28 @@ const Home: React.FC = () => {
 
       
       {/* Header */}
-      <div className="bg-white border-b border-neutral-200 px-4 py-3">
+      <div className="bg-brandNavy px-4 py-3">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-dark-900">Home</h1>
-            <p className="text-sm text-dark-600">Welcome back, {currentUser?.name}</p>
+            <h1 className="text-xl font-bold text-white">Plug</h1>
+            <p className="text-xs text-brandYellow">Your Campus, Connected.</p>
           </div>
-                     <div className="flex items-center space-x-3">
-             <button
-               onClick={handleTestDatabase}
-               className="bg-blue-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-600 transition-colors"
-             >
-               Test DB
-             </button>
-             <button
-               onClick={handleCreatePost}
-               className="bg-orange-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-orange-600 transition-colors flex items-center space-x-1"
-             >
-               <PlusIcon className="h-4 w-4" />
-               <span>Post</span>
-             </button>
-             <button
-               onClick={handleSignOut}
-               className="text-sm text-dark-600 hover:text-dark-900"
-             >
-               Sign Out
-             </button>
-           </div>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleTestDatabase}
+              className="text-white/80 hover:text-white text-sm"
+              title="Notifications"
+            >
+              🔔
+            </button>
+            <button
+              onClick={() => (window.location.href = '/cart')}
+              className="h-8 px-3 rounded-full bg-white text-brandNavy text-sm font-semibold"
+              title="Cart"
+            >
+              Cart
+            </button>
+          </div>
         </div>
       </div>
 
@@ -225,6 +217,16 @@ const Home: React.FC = () => {
                 </option>
               ))}
             </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Plug of the Day */}
+      <div className="px-4 mt-4">
+        <div className="bg-white rounded-xl shadow-md border border-neutral-200 overflow-hidden">
+          <div className="bg-brandYellow text-brandNavy text-xs font-semibold px-3 py-1">Plug of the Day</div>
+          <div className="p-4">
+            <p className="text-sm text-dark-700">Today’s top campus deal handpicked for you.</p>
           </div>
         </div>
       </div>

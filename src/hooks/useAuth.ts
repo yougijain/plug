@@ -45,10 +45,11 @@ export const useAuth = () => {
         
         console.log('✅ [useAuth.signUpMutation] Auth signup successful:', data)
         
-        // Create user profile
+        // Create user profile with auth uid to satisfy RLS
         if (data?.user) {
           console.log('🔍 [useAuth.signUpMutation] Creating user profile...')
           await userApi.createUser({
+            id: data.user.id,
             email: userData.email,
             name: userData.name,
             university: userData.university,

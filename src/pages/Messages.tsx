@@ -200,15 +200,15 @@ const Messages: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen pb-20">
+    <div className="flex h-[calc(100vh-64px)] overflow-hidden">
       {/* Conversations List */}
-      <div className="w-1/3 border-r border-gray-200 bg-white">
-        <div className="p-4 border-b border-gray-200">
-          <h1 className="text-xl font-semibold text-gray-900">Messages</h1>
+      <div className="w-1/3 border-r border-gray-200 bg-white h-full flex flex-col">
+        <div className="p-4 border-b border-gray-200 bg-brandNavy text-white shrink-0">
+          <h1 className="text-xl font-semibold">Messages</h1>
         </div>
 
         {isLoadingConversations ? (
-          <div className="p-4 space-y-4">
+          <div className="p-4 space-y-4 overflow-y-auto">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="flex items-center space-x-3 animate-pulse">
                 <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
@@ -220,7 +220,7 @@ const Messages: React.FC = () => {
             ))}
           </div>
         ) : localConversations && localConversations.length > 0 ? (
-          <div className="overflow-y-auto">
+          <div className="overflow-y-auto flex-1">
             {localConversations.map((conversation) => {
               const otherParticipant = getOtherParticipant(conversation);
               
@@ -262,11 +262,11 @@ const Messages: React.FC = () => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 flex flex-col bg-gray-50">
+      <div className="flex-1 flex flex-col bg-gray-50 h-full">
         {selectedConversation ? (
           <>
             {/* Header */}
-            <div className="bg-white border-b border-gray-200 px-4 py-3">
+            <div className="bg-white border-b border-gray-200 px-4 py-3 shrink-0">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                   <UserCircleIcon className="h-5 w-5 text-gray-400" />
@@ -312,7 +312,7 @@ const Messages: React.FC = () => {
                       className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                        className={`max-w-[80%] break-words px-4 py-2 rounded-lg ${
                           isOwnMessage
                             ? 'bg-blue-600 text-white'
                             : 'bg-white text-gray-900 border border-gray-200'
@@ -341,7 +341,7 @@ const Messages: React.FC = () => {
             </div>
 
             {/* Message Input */}
-            <div className="bg-white border-t border-gray-200 p-4">
+            <div className="bg-white border-t border-gray-200 p-4 shrink-0">
               <div className="flex space-x-3">
                 <input
                   type="text"
@@ -354,7 +354,7 @@ const Messages: React.FC = () => {
                 <button
                   onClick={handleSendMessage}
                   disabled={!messageText.trim()}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-brandOrange text-white rounded-lg hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <PaperAirplaneIcon className="h-5 w-5" />
                 </button>

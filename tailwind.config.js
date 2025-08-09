@@ -6,6 +6,12 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Plug Brand
+        brandNavy: '#0E1F33',
+        brandOrange: '#FF6B35',
+        brandYellow: '#FFD166',
+        brandMint: '#06D6A0',
+        brandOffWhite: '#F5F7FA',
         // Light Neutral - 60% usage for page backgrounds
         neutral: {
           50: '#F7F7F7',

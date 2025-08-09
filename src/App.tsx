@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from './hooks/useAuth';
 import { testSupabaseConnection } from './lib/api';
 import Home from './pages/Home';
 import Explore from './pages/Explore';
 import Cruze from './pages/Cruze';
 import LiveNow from './pages/LiveNow';
+import Post from './pages/Post';
+import Cart from './pages/Cart';
 import Messages from './pages/Messages';
+import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Navigation from './components/Navigation';
-
-const queryClient = new QueryClient();
 
 // Demo user for testing
 const DEMO_USER = {
@@ -54,27 +54,27 @@ const AppContent: React.FC = () => {
   const getActiveTab = () => {
     const path = location.pathname;
     if (path === '/' || path === '/home') return 'home';
-    if (path === '/explore') return 'explore';
-    if (path === '/cruze') return 'cruze';
     if (path === '/live') return 'live';
+    if (path === '/profile') return 'profile';
     if (path === '/messages') return 'messages';
+    if (path === '/post') return 'post';
     return 'home';
   };
 
-  const handleTabChange = (tab: string) => {
+  const handleTabChange = (tab: 'home' | 'live' | 'profile' | 'messages' | 'post') => {
     console.log('🔍 [App] Tab change requested:', tab);
     switch (tab) {
       case 'home':
         navigate('/');
         break;
-      case 'explore':
-        navigate('/explore');
-        break;
-      case 'cruze':
-        navigate('/cruze');
-        break;
       case 'live':
         navigate('/live');
+        break;
+      case 'profile':
+        navigate('/profile');
+        break;
+      case 'post':
+        navigate('/post');
         break;
       case 'messages':
         navigate('/messages');
@@ -126,7 +126,10 @@ const AppContent: React.FC = () => {
           <Route path="/explore" element={<Explore currentUser={currentUser || DEMO_USER} />} />
           <Route path="/cruze" element={<Cruze currentUser={currentUser || DEMO_USER} />} />
           <Route path="/live" element={<LiveNow currentUser={currentUser || DEMO_USER} />} />
+          <Route path="/post" element={<Post />} />
           <Route path="/messages" element={<Messages />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
         <Navigation activeTab={getActiveTab()} onTabChange={handleTabChange} />
       </div>
@@ -137,9 +140,7 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <Router>
-      <QueryClientProvider client={queryClient}>
-        <AppContent />
-      </QueryClientProvider>
+      <AppContent />
     </Router>
   );
 }
