@@ -58,18 +58,21 @@ const Post: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA]">
+    <div className="min-h-screen bg-[#F5F7FA] pb-24">
       {/* Header */}
       <div className="bg-white border-b border-[#E6E9EE] px-4 py-4">
-        <div className="flex items-center justify-between">
-          <button 
-            onClick={back} 
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          >
-            <ChevronLeftIcon className="h-6 w-6 text-[#0E1F33]" />
-          </button>
-          <h1 className="text-lg font-bold text-[#0E1F33]">Create Post</h1>
-          <div className="w-10" /> {/* Spacer for centering */}
+        <div className="grid grid-cols-3 items-center">
+          <div className="justify-self-start">
+            <button 
+              onClick={back} 
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              aria-label="Back"
+            >
+              <ChevronLeftIcon className="h-6 w-6 text-[#0E1F33]" />
+            </button>
+          </div>
+          <h1 className="justify-self-center text-lg font-bold text-[#0E1F33]">Create Post</h1>
+          <div className="justify-self-end w-10" />
         </div>
       </div>
 
