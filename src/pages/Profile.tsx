@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useAppStore } from '../lib/store';
 import { Post } from '../types/index';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Cog6ToothIcon, 
   ShareIcon, 
@@ -359,46 +360,89 @@ const Profile: React.FC = () => {
         )}
       </div>
 
-      {/* Settings Modal */}
-      {showSettings && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50">
-          <div className="bg-white rounded-t-xl w-full max-w-md max-h-[80vh] overflow-y-auto">
-            <div className="p-4 border-b border-[#E6E9EE]">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-[#0E1F33]">Settings</h3>
-                <button
-                  onClick={() => setShowSettings(false)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <span className="text-2xl">×</span>
-                </button>
-              </div>
-            </div>
-            <div className="p-4 space-y-4">
-              <button className="w-full text-left py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors">
-                <p className="font-medium text-[#0E1F33]">Verify phone number</p>
-                <p className="text-sm text-gray-600">Add phone for better security</p>
-              </button>
-              <button className="w-full text-left py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors">
-                <p className="font-medium text-[#0E1F33]">Verify email</p>
-                <p className="text-sm text-gray-600">Confirm your email address</p>
-              </button>
-              <button className="w-full text-left py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors">
-                <p className="font-medium text-[#0E1F33]">Report an issue</p>
-                <p className="text-sm text-gray-600">Help us improve the app</p>
-              </button>
-              <div className="border-t border-[#E6E9EE] pt-4">
-                <button
-                  onClick={handleSignOut}
-                  className="w-full text-left py-3 px-4 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <p className="font-medium">Sign out</p>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+             {/* Settings Modal */}
+       <AnimatePresence>
+         {showSettings && (
+           <motion.div 
+             initial={{ opacity: 0 }}
+             animate={{ opacity: 1 }}
+             exit={{ opacity: 0 }}
+             transition={{ duration: 0.2 }}
+             className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50 pb-20"
+           >
+             <motion.div 
+               initial={{ y: '100%' }}
+               animate={{ y: 0 }}
+               exit={{ y: '100%' }}
+               transition={{ 
+                 type: "spring", 
+                 damping: 25, 
+                 stiffness: 300,
+                 duration: 0.4
+               }}
+               className="bg-white rounded-t-xl w-full max-w-md flex flex-col" 
+               style={{ maxHeight: '70vh' }}
+             >
+             <div className="p-4 border-b border-[#E6E9EE] flex-shrink-0">
+               <div className="flex items-center justify-between">
+                 <h3 className="text-lg font-bold text-[#0E1F33]">Settings</h3>
+                 <button
+                   onClick={() => setShowSettings(false)}
+                   className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                 >
+                   <span className="text-2xl">×</span>
+                 </button>
+               </div>
+             </div>
+             
+                                          <div className="flex-1 overflow-y-auto">
+                 <motion.div 
+                   className="p-4 space-y-4"
+                   initial={{ opacity: 0 }}
+                   animate={{ opacity: 1 }}
+                   transition={{ delay: 0.1, duration: 0.3 }}
+                 >
+                   <motion.button 
+                     whileHover={{ scale: 1.02 }}
+                     whileTap={{ scale: 0.98 }}
+                     className="w-full text-left py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors"
+                   >
+                     <p className="font-medium text-[#0E1F33]">Verify phone number</p>
+                     <p className="text-sm text-gray-600">Add phone for better security</p>
+                   </motion.button>
+                   <motion.button 
+                     whileHover={{ scale: 1.02 }}
+                     whileTap={{ scale: 0.98 }}
+                     className="w-full text-left py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors"
+                   >
+                     <p className="font-medium text-[#0E1F33]">Verify email</p>
+                     <p className="text-sm text-gray-600">Confirm your email address</p>
+                   </motion.button>
+                   <motion.button 
+                     whileHover={{ scale: 1.02 }}
+                     whileTap={{ scale: 0.98 }}
+                     className="w-full text-left py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors"
+                   >
+                     <p className="font-medium text-[#0E1F33]">Report an issue</p>
+                     <p className="text-sm text-gray-600">Help us improve the app!</p>
+                   </motion.button>
+                   
+                   {/* Sign out option - styled like other settings but with subtle distinction */}
+                   <motion.button 
+                     whileHover={{ scale: 1.02 }}
+                     whileTap={{ scale: 0.98 }}
+                     onClick={handleSignOut}
+                     className="w-full text-left py-3 px-4 hover:bg-red-50 rounded-lg transition-colors border-l-4 border-l-transparent hover:border-l-red-200"
+                   >
+                     <p className="font-medium text-red-600">Sign out</p>
+                     <p className="text-sm text-red-500">End your current session</p>
+                   </motion.button>
+                 </motion.div>
+               </div>
+             </motion.div>
+           </motion.div>
+         )}
+       </AnimatePresence>
     </div>
   );
 };

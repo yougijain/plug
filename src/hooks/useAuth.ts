@@ -43,6 +43,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     checkAuth();
+
+    // Subscribe to auth state changes
+    const subscription = auth.onAuthStateChange((event, session) => {
+      try {
+        if (event === 'SIGNED_IN' && session?.user) {
+          const user = session.user as any;
+          setCurrentUser({
+            id: user.id,
+            email: user.email || '',
+            name: user.user_metadata?.name || '',
+            university: user.user_metadata?.university || '',
+            avatar: user.user_metadata?.avatar,
+            verified: false,
+          });
+        }
+        if (event === 'SIGNED_OUT') {
+          setCurrentUser(null);
+        }
+      } catch (err) {
+        console.error('Auth state change handling failed:', err);
+      }
+    });
+
+    return () => {
+      try {
+        subscription?.data?.subscription?.unsubscribe?.();
+      } catch {}
+    };
   }, [setCurrentUser]);
 
   const value = { currentUser, isLoading };

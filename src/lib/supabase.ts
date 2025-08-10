@@ -30,7 +30,13 @@ if (isDemoMode) {
   console.log('✅ [supabase] Supabase environment variables detected. Attempting real connection...')
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+})
 
 // Auth helper functions
 export const auth = {

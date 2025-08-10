@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useAppStore } from '../lib/store';
 
@@ -96,9 +97,42 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleModeSwitch = (newMode: boolean) => {
+    if (newMode && !isSignUp) {
+      // Switching from sign in to sign up - transfer email
+      const signInEmail = signInForm.getValues('email');
+      if (signInEmail) {
+        signUpForm.setValue('email', signInEmail);
+      }
+    } else if (!newMode && isSignUp) {
+      // Switching from sign up to sign in - transfer email
+      const signUpEmail = signUpForm.getValues('email');
+      if (signUpEmail) {
+        signInForm.setValue('email', signUpEmail);
+      }
+    }
+    setIsSignUp(newMode);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-lightBlue-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="min-h-screen bg-gradient-to-br from-blue-50 to-lightBlue-100 flex items-center justify-center p-4"
+    >
+      <motion.div 
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ 
+          duration: 0.6, 
+          ease: "easeOut",
+          type: "spring",
+          stiffness: 100,
+          damping: 20
+        }}
+        className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8"
+      >
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-dark-900 mb-2">Welcome to Loop</h1>
           <p className="text-dark-600">Connect with your university community</p>
@@ -116,9 +150,16 @@ const Login: React.FC = () => {
           </div>
         )}
 
-        <div className="flex mb-6">
-          <button
-            onClick={() => setIsSignUp(false)}
+        <motion.div 
+          className="flex mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+        >
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => handleModeSwitch(false)}
             className={`flex-1 py-2 px-4 rounded-l-lg font-medium transition-colors ${
               !isSignUp
                 ? 'bg-blue-500 text-white'
@@ -126,9 +167,11 @@ const Login: React.FC = () => {
             }`}
           >
             Sign In
-          </button>
-          <button
-            onClick={() => setIsSignUp(true)}
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => handleModeSwitch(true)}
             className={`flex-1 py-2 px-4 rounded-r-lg font-medium transition-colors ${
               isSignUp
                 ? 'bg-blue-500 text-white'
@@ -136,11 +179,20 @@ const Login: React.FC = () => {
             }`}
           >
             Sign Up
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
 
-        {isSignUp ? (
-          <form onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-4">
+        <AnimatePresence mode="wait">
+          {isSignUp ? (
+            <motion.form 
+              key="signup"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              onSubmit={signUpForm.handleSubmit(onSignUp)} 
+              className="space-y-4"
+            >
             <div>
               <label className="block text-sm font-medium text-dark-700 mb-1">
                 Full Name
@@ -211,7 +263,9 @@ const Login: React.FC = () => {
               )}
             </div>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={isSigningUp}
               className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -224,10 +278,18 @@ const Login: React.FC = () => {
               ) : (
                 'Create Account'
               )}
-            </button>
-          </form>
+            </motion.button>
+          </motion.form>
         ) : (
-          <form onSubmit={signInForm.handleSubmit(onSignIn)} className="space-y-4">
+          <motion.form 
+            key="signin"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+            onSubmit={signInForm.handleSubmit(onSignIn)} 
+            className="space-y-4"
+          >
             <div>
               <label className="block text-sm font-medium text-dark-700 mb-1">
                 Email
@@ -262,7 +324,9 @@ const Login: React.FC = () => {
               )}
             </div>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={isSigningIn}
               className="w-full bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -275,23 +339,31 @@ const Login: React.FC = () => {
               ) : (
                 'Sign In'
               )}
-            </button>
-          </form>
+            </motion.button>
+          </motion.form>
         )}
+        </AnimatePresence>
 
-        <div className="mt-6 text-center">
+        <motion.div 
+          className="mt-6 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.4 }}
+        >
           <p className="text-sm text-dark-600">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <button
-              onClick={() => setIsSignUp(!isSignUp)}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handleModeSwitch(!isSignUp)}
               className="text-blue-500 hover:text-blue-600 font-medium"
             >
               {isSignUp ? 'Sign In' : 'Sign Up'}
-            </button>
+            </motion.button>
           </p>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import Navigation from './components/Navigation';
@@ -13,6 +13,7 @@ import Cart from './pages/Cart';
 import Saved from './pages/Saved';
 import { queryClient } from './lib/queryClient';
 import { useAppStore } from './lib/store';
+import { AnimatePresence } from 'framer-motion';
 
 // Demo user for development
 const DEMO_USER = {
@@ -74,16 +75,18 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F5F7FA] flex justify-center overflow-hidden">
       <div className="w-full max-w-md bg-white shadow-2xl relative overflow-hidden pb-20">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/live" element={<LiveNow currentUser={currentUser} />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/post" element={<Post />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/saved" element={<Saved />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AnimatePresence mode="wait">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/live" element={<LiveNow currentUser={currentUser} />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/post" element={<Post />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/saved" element={<Saved />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AnimatePresence>
         <Navigation />
       </div>
     </div>

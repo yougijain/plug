@@ -52,8 +52,27 @@ The app uses a carefully designed color palette built around blue and orange wit
 
 1. Clone the repository
 2. Install dependencies: `npm install`
-3. Set up environment variables (see `.env.example`)
-4. Start development server: `npm start`
+3. Set up environment variables (see below)
+4. Test database connectivity: `npm run db:test`
+5. Start development server: `npm start`
+
+### Environment variables
+
+Create a `.env` file in the project root with:
+
+```
+REACT_APP_SUPABASE_URL=your_supabase_project_url
+REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+Optional (for admin scripts only; never expose in client builds):
+
+```
+# Only for server-side tooling if needed
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
+
+The app supports a demo mode. If the environment variables are missing, it falls back to in-memory/demo data so you can still explore the UI.
 
 ## 🧹 Recent Cleanup
 

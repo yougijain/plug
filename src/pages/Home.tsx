@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { usePosts } from '../hooks/usePosts';
 import { useAppStore } from '../lib/store';
 import { Post } from '../types/index';
+import { motion } from 'framer-motion';
 import { 
   MagnifyingGlassIcon, 
   FunnelIcon, 
@@ -210,13 +211,26 @@ const Home: React.FC = () => {
           </div>
         ) : filteredPosts.length > 0 ? (
           // Posts feed
-          <div className="space-y-4">
-            {filteredPosts.map((post) => (
-                             <div 
-                 key={post.id} 
-                 className="bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-shadow border border-[#ECECEC]"
-                 onClick={() => handlePostClick(post)}
-               >
+          <motion.div 
+            className="space-y-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            {filteredPosts.map((post, index) => (
+              <motion.div 
+                key={post.id} 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ 
+                  duration: 0.4, 
+                  delay: index * 0.1,
+                  ease: "easeOut"
+                }}
+                whileHover={{ scale: 1.02 }}
+                className="bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-shadow border border-[#ECECEC]"
+                onClick={() => handlePostClick(post)}
+              >
                 <div className="flex items-center space-x-3 mb-3">
                   <div className="h-10 w-10 bg-[#F5F7FA] rounded-full flex items-center justify-center">
                     <span className="text-sm font-semibold text-[#0E1F33]">
@@ -258,9 +272,9 @@ const Home: React.FC = () => {
                     ))}
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         ) : (
                      // Empty state
            <div className="text-center py-16">
@@ -269,20 +283,29 @@ const Home: React.FC = () => {
                <h3 className="text-base font-bold text-[#2B2B2B] mb-3">No posts yet</h3>
                <p className="text-sm font-medium text-[#6F7A85] mb-8">Be the first to share something with your campus!</p>
              </div>
-             <div className="space-y-4">
-               <button
+             <motion.div 
+               className="space-y-4"
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ delay: 0.2, duration: 0.4 }}
+             >
+               <motion.button
+                 whileHover={{ scale: 1.02 }}
+                 whileTap={{ scale: 0.98 }}
                  onClick={handleCreatePost}
                  className="w-full h-11 bg-[#FF6B35] text-white rounded-lg font-semibold hover:brightness-110 transition-colors shadow-[0px_2px_4px_rgba(0,0,0,0.08)]"
                >
                  Post Something
-               </button>
-               <button
+               </motion.button>
+               <motion.button
+                 whileHover={{ scale: 1.02 }}
+                 whileTap={{ scale: 0.98 }}
                  onClick={handleLiveNow}
                  className="text-[#FF6B35] text-sm font-medium hover:underline"
                >
                  See what's Live →
-               </button>
-             </div>
+               </motion.button>
+             </motion.div>
            </div>
         )}
       </div>
