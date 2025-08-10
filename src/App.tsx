@@ -1,150 +1,105 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from './hooks/useAuth';
-import { testSupabaseConnection } from './lib/api';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider, useAuth } from './hooks/useAuth';
+import Navigation from './components/Navigation';
 import Home from './pages/Home';
-import Explore from './pages/Explore';
-import Cruze from './pages/Cruze';
 import LiveNow from './pages/LiveNow';
+import Profile from './pages/Profile';
+import Messages from './pages/Messages';
+import Login from './pages/Login';
 import Post from './pages/Post';
 import Cart from './pages/Cart';
 import Saved from './pages/Saved';
-import Messages from './pages/Messages';
-import Profile from './pages/Profile';
-import Login from './pages/Login';
-import Navigation from './components/Navigation';
+import { queryClient } from './lib/queryClient';
+import { useAppStore } from './lib/store';
 
-// Demo user for testing
+// Demo user for development
 const DEMO_USER = {
-  id: 'demo-user-1',
+  id: 'demo-user-123',
   name: 'Demo User',
   email: 'demo@example.com',
   university: 'Purdue University',
-  avatar: undefined,
+  avatar: null,
   verified: true,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };
 
 const AppContent: React.FC = () => {
-  const { currentUser } = useAuth();
-  const [isDemoMode, setIsDemoMode] = useState(false);
-  const [dbConnectionStatus, setDbConnectionStatus] = useState<'checking' | 'connected' | 'failed'>('checking');
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { currentUser, isLoading } = useAuth();
+  const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
 
+  // Test Supabase connection on app start
   useEffect(() => {
-    const checkDatabaseConnection = async () => {
-      console.log('🔍 [App] Checking database connection...');
-      const isConnected = await testSupabaseConnection();
-      
-      if (isConnected) {
-        console.log('✅ [App] Database connected successfully');
-        setDbConnectionStatus('connected');
-        setIsDemoMode(false);
-      } else {
-        console.log('⚠️ [App] Database connection failed, using demo mode');
-        setDbConnectionStatus('failed');
-        setIsDemoMode(true);
+    const testConnection = async () => {
+      try {
+        const { supabase } = await import('./lib/supabase');
+        const { data, error } = await supabase
+          .from('posts')
+          .select('id')
+          .limit(1);
+        
+        if (error) {
+          console.error('❌ Supabase connection failed:', error);
+          setIsSupabaseConnected(false);
+        } else {
+          console.log('✅ Supabase connected successfully');
+          setIsSupabaseConnected(true);
+        }
+      } catch (err) {
+        console.error('❌ Failed to test Supabase connection:', err);
+        setIsSupabaseConnected(false);
       }
     };
-
-    checkDatabaseConnection();
+    
+    testConnection();
   }, []);
 
-  const getActiveTab = () => {
-    const path = location.pathname;
-    if (path === '/' || path === '/home') return 'home';
-    if (path === '/live') return 'live';
-    if (path === '/profile') return 'profile';
-    if (path === '/messages') return 'messages';
-    if (path === '/post') return 'post';
-    return 'home';
-  };
-
-  const handleTabChange = (tab: 'home' | 'live' | 'profile' | 'messages' | 'post') => {
-    console.log('🔍 [App] Tab change requested:', tab);
-    switch (tab) {
-      case 'home':
-        navigate('/');
-        break;
-      case 'live':
-        navigate('/live');
-        break;
-      case 'profile':
-        navigate('/profile');
-        break;
-      case 'post':
-        navigate('/post');
-        break;
-      case 'messages':
-        navigate('/messages');
-        break;
-      default:
-        navigate('/');
-    }
-  };
-
-  // Show loading while checking database
-  if (dbConnectionStatus === 'checking') {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#F5F7FA] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-dark-600">Checking database connection...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF6B35] mx-auto mb-4"></div>
+          <p className="text-[#0E1F33] font-medium">Loading Plug...</p>
         </div>
       </div>
     );
   }
 
-  // Show login if no user
-  if (!currentUser && !isDemoMode) {
+  if (!currentUser) {
     return <Login />;
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
-      {isDemoMode && (
-        <div className="bg-lightOrange-100 border-b border-lightOrange-200 px-4 py-2 text-center">
-          <p className="text-orange-700 text-sm">
-            🚀 <strong>Demo Mode:</strong> Running without Supabase. Sign up for full features!
-          </p>
-        </div>
-      )}
-      
-      {dbConnectionStatus === 'connected' && (
-        <div className="bg-lightBlue-100 border-b border-lightBlue-200 px-4 py-2 text-center">
-          <p className="text-blue-700 text-sm">
-            ✅ <strong>Database Connected:</strong> All features are live!
-          </p>
-        </div>
-      )}
-      
-      <div className="max-w-md mx-auto bg-white min-h-screen shadow-lg">
+    <div className="min-h-screen bg-[#F5F7FA] flex justify-center overflow-hidden">
+      <div className="w-full max-w-md bg-white shadow-2xl relative overflow-hidden pb-20">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/explore" element={<Explore currentUser={currentUser || DEMO_USER} />} />
-          <Route path="/cruze" element={<Cruze currentUser={currentUser || DEMO_USER} />} />
-          <Route path="/live" element={<LiveNow currentUser={currentUser || DEMO_USER} />} />
-          <Route path="/post" element={<Post />} />
+          <Route path="/live" element={<LiveNow currentUser={currentUser} />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/messages" element={<Messages />} />
+          <Route path="/post" element={<Post />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/saved" element={<Saved />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-        <Navigation activeTab={getActiveTab()} onTabChange={handleTabChange} />
+        <Navigation />
       </div>
     </div>
   );
 };
 
-function App() {
+const App: React.FC = () => {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </AuthProvider>
+    </QueryClientProvider>
   );
-}
+};
 
 export default App; 

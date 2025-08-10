@@ -51,6 +51,10 @@ export interface Conversation {
   unread_count: number;
   created_at: string;
   updated_at: string;
+  // Listing information for the conversation
+  listing_title?: string;
+  listing_price?: number;
+  listing_image?: string | null;
 }
 
 export interface Ride {

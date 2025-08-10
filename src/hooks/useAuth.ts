@@ -1,13 +1,59 @@
+import React from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, createContext, useContext, ReactNode, useState } from 'react'
 import { auth } from '../lib/supabase'
 import { userApi } from '../lib/api'
 import { useAppStore } from '../lib/store'
 import type { User } from '../types'
 
+// Create AuthContext
+const AuthContext = createContext<{
+  currentUser: User | null;
+  isLoading: boolean;
+}>({
+  currentUser: null,
+  isLoading: true,
+});
+
+// AuthProvider component
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const { currentUser, setCurrentUser } = useAppStore();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const result = await auth.getCurrentUser();
+        if (result && 'user' in result && result.user) {
+          const user = result.user as any;
+          setCurrentUser({
+            id: user.id,
+            email: user.email || '',
+            name: user.user_metadata?.name || '',
+            university: user.user_metadata?.university || '',
+            avatar: user.user_metadata?.avatar,
+            verified: false
+          });
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [setCurrentUser]);
+
+  const value = { currentUser, isLoading };
+  
+  return React.createElement(AuthContext.Provider, { value }, children);
+};
+
 export const useAuth = () => {
-  const { currentUser, setCurrentUser } = useAppStore()
-  const { setError, clearError } = useAppStore()
+  const { currentUser, isLoading } = useContext(AuthContext);
+  const { setCurrentUser } = useAppStore();
+  const { setError, clearError } = useAppStore();
 
   const signUpMutation = useMutation({
     mutationFn: async ({ email, password, userData }: {
@@ -105,9 +151,9 @@ export const useAuth = () => {
           const errorMessageStr = (error as any)?.message || '';
           
           if (errorMessageStr.includes('Invalid login credentials')) {
-            errorMessage = 'Invalid email or password. Please check your credentials.';
+            errorMessage = 'Invalid email or password. Please try again.';
           } else if (errorMessageStr.includes('Email not confirmed')) {
-            errorMessage = 'Please check your email and confirm your account before signing in.';
+            errorMessage = 'Please check your email and confirm your account.';
           } else if (errorMessageStr) {
             errorMessage = errorMessageStr;
           }
@@ -147,6 +193,7 @@ export const useAuth = () => {
   const signOutMutation = useMutation({
     mutationFn: async () => {
       console.log('🔍 [useAuth.signOutMutation] Starting signout...')
+      clearError() // Clear any previous errors
       
       try {
         console.log('🔍 [useAuth.signOutMutation] Calling auth.signOut...')
@@ -154,10 +201,11 @@ export const useAuth = () => {
         
         if (error) {
           console.error('❌ [useAuth.signOutMutation] Auth signout error:', error)
-          throw error
+          throw new Error('Sign out failed. Please try again.');
         }
         
         console.log('✅ [useAuth.signOutMutation] Auth signout successful')
+        return true
       } catch (err) {
         console.error('❌ [useAuth.signOutMutation] Exception:', err)
         throw err
@@ -165,47 +213,23 @@ export const useAuth = () => {
     },
     onSuccess: () => {
       console.log('🔍 [useAuth.signOutMutation] onSuccess called')
-      console.log('🔍 [useAuth.signOutMutation] Clearing current user...')
       setCurrentUser(null)
       console.log('✅ [useAuth.signOutMutation] Current user cleared')
     },
     onError: (error) => {
       console.error('❌ [useAuth.signOutMutation] onError:', error)
+      setError(error instanceof Error ? error.message : 'Sign out failed. Please try again.')
     }
   })
 
-  // Initialize current user if not set (for demo mode)
-  useEffect(() => {
-    if (!currentUser) {
-      console.log('🔍 [useAuth] No current user, checking for demo mode...')
-      const checkDemoUser = async () => {
-        try {
-          const user = await userApi.getCurrentUser()
-          if (user) {
-            console.log('🔍 [useAuth] Setting demo user:', user)
-            setCurrentUser(user)
-          }
-        } catch (err) {
-          console.log('🔍 [useAuth] No user found, staying logged out')
-        }
-      }
-      checkDemoUser()
-    }
-  }, [currentUser, setCurrentUser])
-
-  // Debug current user state
-  console.log('🔍 [useAuth] currentUser from store:', currentUser)
-  console.log('🔍 [useAuth] signOutMutation.isPending:', signOutMutation.isPending)
-
   return {
     currentUser,
-    isLoading: signUpMutation.isPending || signInMutation.isPending || signOutMutation.isPending,
-    error: null,
-    signUp: signUpMutation.mutate,
-    signIn: signInMutation.mutate,
-    signOut: signOutMutation.mutate,
+    isLoading,
+    signUp: signUpMutation.mutateAsync,
+    signIn: signInMutation.mutateAsync,
+    signOut: signOutMutation.mutateAsync,
     isSigningUp: signUpMutation.isPending,
     isSigningIn: signInMutation.isPending,
-    isSigningOut: signOutMutation.isPending
+    isSigningOut: signOutMutation.isPending,
   }
 } 

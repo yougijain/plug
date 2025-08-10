@@ -13,6 +13,7 @@ interface AppState {
   clearError: () => void
   savePost: (post: Post) => void
   removeSavedPost: (postId: string) => void
+  toggleSavedPost: (post: Post) => void
   addToCart: (post: Post) => void
   removeFromCart: (postId: string) => void
   clearCart: () => void
@@ -41,6 +42,14 @@ export const useAppStore = create<AppState>((set) => ({
   removeSavedPost: (postId) => set((state) => ({
     savedPosts: state.savedPosts.filter((p) => p.id !== postId)
   })),
+  toggleSavedPost: (post) => set((state) => {
+    const exists = state.savedPosts.some((p) => p.id === post.id)
+    if (exists) {
+      return { savedPosts: state.savedPosts.filter((p) => p.id !== post.id) }
+    } else {
+      return { savedPosts: [post, ...state.savedPosts] }
+    }
+  }),
   addToCart: (post) => set((state) => {
     const exists = state.cart.some((p) => p.id === post.id)
     return exists ? state : { cart: [post, ...state.cart] }
