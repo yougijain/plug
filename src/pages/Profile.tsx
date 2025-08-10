@@ -14,6 +14,7 @@ import {
   MinusIcon,
   CheckIcon
 } from '@heroicons/react/24/outline';
+import { SavedEmptyIcon, SellingEmptyIcon, BuyingEmptyIcon } from '../components/SVGIcon';
 
 const Profile: React.FC = () => {
   const { currentUser, signOut } = useAuth();
@@ -239,7 +240,7 @@ const Profile: React.FC = () => {
               </div>
             ) : (
               <div className="text-center py-12">
-                <HeartIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <SavedEmptyIcon className="h-24 w-24 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-[#0E1F33] mb-2">Nothing saved yet 👀</h3>
                 <p className="text-gray-600 mb-6">Start saving items you love to find them later</p>
                 <div className="space-y-3">
@@ -303,7 +304,7 @@ const Profile: React.FC = () => {
               </div>
             ) : (
               <div className="text-center py-12">
-                <TagIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <SellingEmptyIcon className="h-24 w-24 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-[#0E1F33] mb-2">No items for sale</h3>
                 <p className="text-gray-600 mb-6">Start selling to earn money and declutter your space</p>
                 <button 
@@ -343,7 +344,7 @@ const Profile: React.FC = () => {
               </div>
             ) : (
               <div className="text-center py-12">
-                <ShoppingBagIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <BuyingEmptyIcon className="h-24 w-24 mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-[#0E1F33] mb-2">No purchase history</h3>
                 <p className="text-gray-600 mb-6">Your completed purchases will appear here</p>
                 <button 

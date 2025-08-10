@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" fill="none">
+<rect x="0" y="0" width="160" height="160" rx="16" fill="#F5F7FA"/>
+<!-- hourglass frame -->
+<path d="M50 36 h60 a4 4 0 0 1 0 8 h-60 a4 4 0 0 1 0 -8z" fill="#E6E9EE"/>
+<path d="M50 116 h60 a4 4 0 0 1 0 8 h-60 a4 4 0 0 1 0 -8z" fill="#E6E9EE"/>
+<path d="M56 44 L104 44 L84 64 L76 64 L56 44z" fill="white" stroke="#0E1F33" stroke-width="2"/>
+<path d="M56 124 L104 124 L84 104 L76 104 L56 124z" fill="white" stroke="#0E1F33" stroke-width="2"/>
+<!-- sand top -->
+<path d="M78 62 L82 62 L80 66 Z" fill="#FFD166"/>
+<!-- sand bottom -->
+<path d="M76 108 L84 108 L80 112 Z" fill="#FFD166"/>
+<!-- bolt -->
+<path d="M108 24 L96 52 L110 48 L98 76" stroke="#FF6B35" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

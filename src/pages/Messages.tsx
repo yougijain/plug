@@ -14,6 +14,7 @@ import {
   CurrencyDollarIcon,
   ArrowDownIcon
 } from '@heroicons/react/24/outline';
+import { NoMessagesIcon } from '../components/SVGIcon';
 
 // Extended conversation type for demo data
 interface DemoConversation extends Conversation {
@@ -318,7 +319,7 @@ const Messages: React.FC = () => {
           </div>
         ) : (
           <div className="p-8 text-center">
-            <UserCircleIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <NoMessagesIcon className="h-24 w-24 mx-auto mb-4" />
             <p className="text-gray-500 font-medium">No conversations yet</p>
             <p className="text-sm text-gray-400 mt-1">Start chatting when you contact someone about a listing</p>
           </div>

@@ -9,6 +9,7 @@ import {
   ClockIcon, 
   EyeIcon
 } from '@heroicons/react/24/outline';
+import { LiveEmptyIcon } from '../components/SVGIcon';
 
 interface LiveNowProps {
   currentUser: User;
@@ -334,7 +335,7 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
 
         {filteredPosts.length === 0 && (
           <div className="text-center py-12">
-            <BoltIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <LiveEmptyIcon className="h-24 w-24 mx-auto mb-4" />
             <p className="text-gray-500 font-medium">No live deals at the moment</p>
             <p className="text-sm text-gray-400 mt-1">Check back soon for new flash deals!</p>
           </div>

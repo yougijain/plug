@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" fill="none">
+<rect x="0" y="0" width="160" height="160" rx="16" fill="#F5F7FA"/>
+<!-- box -->
+<rect x="34" y="92" width="92" height="36" rx="8" fill="white" stroke="#0E1F33" stroke-width="2"/>
+<path d="M34 92 L56 78 H126 L126 92 H34 Z" fill="#E6E9EE"/>
+<!-- camera -->
+<rect x="56" y="54" width="48" height="32" rx="8" fill="white" stroke="#0E1F33" stroke-width="2"/>
+<circle cx="80" cy="70" r="10" stroke="#0E1F33" stroke-width="2" fill="#06D6A0" opacity="0.3"/>
+<circle cx="80" cy="70" r="5" fill="#06D6A0"/>
+<!-- price tag -->
+<path d="M118 84 L135 96 L122 109 L105 95 Z" fill="#FFD166" stroke="#0E1F33" stroke-width="2"/>
+<circle cx="118" cy="92" r="2" fill="#0E1F33"/>
+</svg>

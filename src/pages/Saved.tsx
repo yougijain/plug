@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../lib/store'
+import { SavedEmptyIcon } from '../components/SVGIcon'
 
 const Saved: React.FC = () => {
   const navigate = useNavigate()
@@ -15,8 +16,24 @@ const Saved: React.FC = () => {
 
       <div className="p-4 space-y-3">
         {savedPosts.length === 0 ? (
-          <div className="bg-white border border-neutral-200 rounded-lg p-4 text-dark-600 text-center">
-            No saved items yet.
+          <div className="text-center py-12">
+            <SavedEmptyIcon className="w-24 h-24 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-[#0E1F33] mb-2">Nothing saved yet 👀</h3>
+            <p className="text-gray-600 mb-6">Start saving items you're interested in!</p>
+            <div className="space-y-3">
+              <button
+                onClick={() => navigate('/')}
+                className="w-full h-11 bg-[#FF6B35] text-white rounded-xl font-semibold hover:brightness-110 transition-colors"
+              >
+                Find deals
+              </button>
+              <button
+                onClick={() => navigate('/post')}
+                className="w-full h-11 border border-[#E6E9EE] text-[#0E1F33] rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Post something
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">

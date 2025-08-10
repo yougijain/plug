@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" fill="none">
+<rect x="0" y="0" width="160" height="160" rx="16" fill="#F5F7FA"/>
+<!-- desk -->
+<rect x="20" y="108" width="120" height="12" rx="6" fill="#E6E9EE"/>
+<!-- phone -->
+<rect x="60" y="42" width="40" height="66" rx="8" stroke="#0E1F33" stroke-width="2" fill="white"/>
+<circle cx="80" cy="72" r="16" fill="#FF6B35" opacity="0.12"/>
+<path d="M80 60 v24 M68 72 h24" stroke="#FF6B35" stroke-width="3" stroke-linecap="round"/>
+<!-- small props -->
+<rect x="30" y="98" width="22" height="6" rx="3" fill="#E6E9EE"/>
+<rect x="108" y="96" width="22" height="8" rx="4" fill="#E6E9EE"/>
+</svg>

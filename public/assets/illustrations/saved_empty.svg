@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" fill="none">
+<rect x="0" y="0" width="160" height="160" rx="16" fill="#F5F7FA"/>
+<!-- box -->
+<rect x="40" y="76" width="80" height="44" rx="8" fill="white" stroke="#0E1F33" stroke-width="2"/>
+<path d="M40 76 L62 60 H118 L120 76 H40 Z" fill="#E6E9EE"/>
+<path d="M62 60 L80 74 L98 60" fill="#E6E9EE"/>
+<!-- heart -->
+<path d="M80 44 
+  C80 36,70 36,70 44 
+  C70 50,80 56,80 56 
+  C80 56,90 50,90 44 
+  C90 36,80 36,80 44 Z" fill="#FF6B35"/>
+</svg>

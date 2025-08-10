@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" fill="none">
+<rect x="0" y="0" width="160" height="160" rx="16" fill="#F5F7FA"/>
+<!-- shelf -->
+<rect x="28" y="108" width="104" height="8" rx="4" fill="#E6E9EE"/>
+<!-- magnifier -->
+<circle cx="76" cy="64" r="20" stroke="#0E1F33" stroke-width="2" fill="white"/>
+<line x1="90" y1="78" x2="106" y2="94" stroke="#0E1F33" stroke-width="4" stroke-linecap="round"/>
+<rect x="60" y="54" width="32" height="8" rx="4" fill="#E6E9EE"/>
+</svg>

@@ -11,6 +11,7 @@ import {
   BellIcon,
   PlusIcon
 } from '@heroicons/react/24/outline';
+import { EmptyStateIcon, LogoIcon } from '../components/SVGIcon';
 
 const Home: React.FC = () => {
   const { currentUser } = useAuth();
@@ -83,31 +84,46 @@ const Home: React.FC = () => {
   const categories = ['All Categories', 'Electronics', 'Books', 'Clothing', 'Furniture', 'Services'];
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA]">
+         <div className="min-h-screen bg-[#FAFAFA]">
       {/* Header */}
-      <div className="bg-[#0E1F33] text-white px-4 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold">Plug</h1>
-            <p className="text-sm text-[#D8E1EE]">Your Campus, Connected.</p>
+      <div className="bg-[#0E1F33] text-white h-16 relative">
+        {/* Subtle inner highlight line */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-white opacity-[0.08]"></div>
+        
+        <div className="flex items-center justify-between h-full px-4">
+          {/* Left side - Logo and wordmark */}
+          <div className="flex items-center space-x-2">
+            {/* Brand plate behind logo */}
+            <div className="relative">
+              <div className="absolute inset-0 w-6 h-6 bg-white rounded-full opacity-[0.14]"></div>
+              <div className="relative">
+                <LogoIcon className="h-6 w-6" />
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <h1 className="text-lg font-bold text-white leading-none">Plug</h1>
+              <span className="text-xs font-medium text-[#D0D6E1] leading-none">Plug into campus life.</span>
+            </div>
           </div>
+          
+          {/* Right side - Icons */}
           <div className="flex items-center space-x-3">
             <button 
               onClick={handleCart}
-              className="p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+              className="p-1.5 text-white hover:bg-white/10 rounded-full transition-colors"
               aria-label="Saved items"
             >
               <HeartIcon className="h-6 w-6" />
             </button>
             <button 
               onClick={handleNotifications}
-              className="relative p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+              className="relative p-1.5 text-white hover:bg-white/10 rounded-full transition-colors"
               aria-label="Notifications"
             >
               <BellIcon className="h-6 w-6" />
-              {/* Only show badge if there are real notifications */}
+              {/* Badge: 12px circle, positioned in top-right corner */}
               {hasNotifications && (
-                <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-[#FF6B35] text-white text-[10px] leading-3 flex items-center justify-center font-semibold">
+                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-[#FF6B35] text-white text-[8px] leading-none flex items-center justify-center font-semibold">
                   1
                 </span>
               )}
@@ -139,26 +155,26 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="px-4 py-4">
-        {/* Plug of the Day - Single Card */}
-        <div className="mb-6">
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="h-7 bg-[#FFD166] flex items-center justify-center">
-              <span className="text-sm font-semibold text-[#0E1F33]">🔥 Plug of the Day</span>
-            </div>
-            <div className="p-4">
-              <h3 className="text-lg font-bold text-[#0E1F33] mb-2">iPhone 13 Pro - Like New</h3>
-              <p className="text-gray-600 text-sm mb-3">Perfect condition, comes with original box and charger. Need to sell before graduation!</p>
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-bold text-[#FF6B35]">$750</span>
-                <button className="px-4 py-2 bg-[#FF6B35] text-white rounded-xl font-semibold hover:brightness-110 transition-colors">
-                  View Details
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+             {/* Content */}
+       <div className="px-4 py-6">
+                 {/* Plug of the Day - Single Card */}
+         <div className="mb-8">
+           <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-[#ECECEC]">
+             <div className="h-7 bg-[#FFB400] flex items-center justify-center">
+               <span className="text-sm font-semibold text-[#0E1F33]">🔥 Plug of the Day</span>
+             </div>
+             <div className="p-4">
+               <h3 className="text-lg font-bold text-[#0E1F33] mb-2">iPhone 13 Pro - Like New</h3>
+               <p className="text-gray-600 text-sm mb-3">Perfect condition, comes with original box and charger. Need to sell before graduation!</p>
+               <div className="flex items-center justify-between">
+                 <span className="text-3xl font-bold text-[#FF6B35]">$750</span>
+                 <button className="px-4 py-2 bg-[#FF6B35] text-white rounded-xl font-semibold hover:brightness-110 transition-colors">
+                   View Details
+                 </button>
+               </div>
+             </div>
+           </div>
+         </div>
 
         {/* Feed */}
         {isLoading ? (
@@ -177,9 +193,9 @@ const Home: React.FC = () => {
                 </div>
               </div>
             </div>
-            {/* 3 post skeletons */}
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-xl p-4 shadow-lg animate-pulse">
+                         {/* 3 post skeletons */}
+             {[...Array(3)].map((_, i) => (
+               <div key={i} className="bg-white rounded-xl p-4 shadow-lg animate-pulse border border-[#ECECEC]">
                 <div className="flex items-center space-x-3 mb-3">
                   <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
                   <div className="flex-1">
@@ -196,11 +212,11 @@ const Home: React.FC = () => {
           // Posts feed
           <div className="space-y-4">
             {filteredPosts.map((post) => (
-              <div 
-                key={post.id} 
-                className="bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
-                onClick={() => handlePostClick(post)}
-              >
+                             <div 
+                 key={post.id} 
+                 className="bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-shadow border border-[#ECECEC]"
+                 onClick={() => handlePostClick(post)}
+               >
                 <div className="flex items-center space-x-3 mb-3">
                   <div className="h-10 w-10 bg-[#F5F7FA] rounded-full flex items-center justify-center">
                     <span className="text-sm font-semibold text-[#0E1F33]">
@@ -246,30 +262,28 @@ const Home: React.FC = () => {
             ))}
           </div>
         ) : (
-          // Empty state
-          <div className="text-center py-12">
-            <div className="mb-6">
-              <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <PlusIcon className="h-12 w-12 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-bold text-[#0E1F33] mb-2">No posts yet</h3>
-              <p className="text-gray-600 mb-6">Be the first to share something with your campus!</p>
-            </div>
-            <div className="space-y-3">
-              <button
-                onClick={handleCreatePost}
-                className="w-full h-11 bg-[#FF6B35] text-white rounded-[22px] font-semibold hover:brightness-110 transition-colors"
-              >
-                Post Something
-              </button>
-              <button
-                onClick={handleLiveNow}
-                className="text-[#FF6B35] font-medium hover:underline"
-              >
-                See what's Live →
-              </button>
-            </div>
-          </div>
+                     // Empty state
+           <div className="text-center py-16">
+             <div className="mb-8">
+               <EmptyStateIcon className="w-12 h-12 mx-auto mb-6 opacity-80" />
+               <h3 className="text-base font-bold text-[#2B2B2B] mb-3">No posts yet</h3>
+               <p className="text-sm font-medium text-[#6F7A85] mb-8">Be the first to share something with your campus!</p>
+             </div>
+             <div className="space-y-4">
+               <button
+                 onClick={handleCreatePost}
+                 className="w-full h-11 bg-[#FF6B35] text-white rounded-lg font-semibold hover:brightness-110 transition-colors shadow-[0px_2px_4px_rgba(0,0,0,0.08)]"
+               >
+                 Post Something
+               </button>
+               <button
+                 onClick={handleLiveNow}
+                 className="text-[#FF6B35] text-sm font-medium hover:underline"
+               >
+                 See what's Live →
+               </button>
+             </div>
+           </div>
         )}
       </div>
     </div>
