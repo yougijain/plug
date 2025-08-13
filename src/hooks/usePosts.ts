@@ -7,6 +7,7 @@ export const usePosts = (filters?: {
   category?: string
   status?: string
   userId?: string
+  isFlash?: boolean
 }) => {
   const queryClient = useQueryClient()
 
@@ -59,15 +60,28 @@ export const usePosts = (filters?: {
     },
     onSuccess: (newPost) => {
       console.log('🔍 [usePosts.createPostMutation] onSuccess called:', newPost)
-      console.log('🔍 [usePosts.createPostMutation] Invalidating posts query...')
-      
-      // Invalidate all posts queries to ensure refresh
+      // Optimistically update any cached posts lists
+      queryClient.setQueriesData({ queryKey: ['posts'] }, (old: any) => {
+        // old is array of posts or undefined
+        if (!old) return [newPost]
+        if (Array.isArray(old)) return [newPost, ...old]
+        return old
+      })
+      // Also update user-specific lists if present
+      queryClient.getQueryCache().findAll({ queryKey: ['posts'] }).forEach((q) => {
+        const key = q.queryKey as any[]
+        const filters = key?.[1]
+        if (filters?.userId && filters.userId === newPost.user_id) {
+          queryClient.setQueryData(['posts', filters], (old: any) => {
+            if (!old) return [newPost]
+            if (Array.isArray(old)) return [newPost, ...old]
+            return old
+          })
+        }
+      })
+      // Finally, invalidate to ensure consistency with server
       queryClient.invalidateQueries({ queryKey: ['posts'] })
-      
-      // Also refetch the posts immediately
-      queryClient.refetchQueries({ queryKey: ['posts'] })
-      
-      console.log('✅ [usePosts.createPostMutation] Posts query invalidated and refetched')
+      console.log('✅ [usePosts.createPostMutation] Posts cache updated and invalidated')
     },
     onError: (error) => {
       console.error('❌ [usePosts.createPostMutation] onError:', error)

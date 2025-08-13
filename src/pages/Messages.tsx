@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useConversations, useMessages } from '../hooks/useMessages';
-import { useAppStore } from '../lib/store';
 import { Conversation, Message } from '../types/index';
 import { 
   PaperAirplaneIcon, 
@@ -26,7 +25,6 @@ interface DemoConversation extends Conversation {
 const Messages: React.FC = () => {
   const { currentUser } = useAuth();
   const { conversations, isLoading: isLoadingConversations } = useConversations(currentUser?.id || '');
-  const { error } = useAppStore();
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -241,15 +239,7 @@ const Messages: React.FC = () => {
     return conversationsWithLastMessage.find(c => c.id === selectedConversation);
   };
 
-  if (error) {
-    return (
-      <div className="p-4">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600">Error: {error}</p>
-        </div>
-      </div>
-    );
-  }
+  // Do not render global app error here; messages UI should be independent from unrelated errors
 
   // CONVERSATION LIST VIEW
   if (!selectedConversation) {

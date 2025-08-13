@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import Navigation from './components/Navigation';
 import Home from './pages/Home';
@@ -11,46 +11,30 @@ import Login from './pages/Login';
 import Post from './pages/Post';
 import Cart from './pages/Cart';
 import Saved from './pages/Saved';
+import PostDetail from './pages/PostDetail';
 import { queryClient } from './lib/queryClient';
-import { useAppStore } from './lib/store';
 import { AnimatePresence } from 'framer-motion';
-
-// Demo user for development
-const DEMO_USER = {
-  id: 'demo-user-123',
-  name: 'Demo User',
-  email: 'demo@example.com',
-  university: 'Purdue University',
-  avatar: null,
-  verified: true,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
 
 const AppContent: React.FC = () => {
   const { currentUser, isLoading } = useAuth();
-  const [isSupabaseConnected, setIsSupabaseConnected] = useState(false);
 
   // Test Supabase connection on app start
   useEffect(() => {
     const testConnection = async () => {
       try {
         const { supabase } = await import('./lib/supabase');
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('posts')
           .select('id')
           .limit(1);
         
         if (error) {
           console.error('❌ Supabase connection failed:', error);
-          setIsSupabaseConnected(false);
         } else {
           console.log('✅ Supabase connected successfully');
-          setIsSupabaseConnected(true);
         }
       } catch (err) {
         console.error('❌ Failed to test Supabase connection:', err);
-        setIsSupabaseConnected(false);
       }
     };
     
@@ -82,6 +66,7 @@ const AppContent: React.FC = () => {
             <Route path="/profile" element={<Profile />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/post" element={<Post />} />
+            <Route path="/post/:id" element={<PostDetail />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/saved" element={<Saved />} />
             <Route path="*" element={<Navigate to="/" replace />} />

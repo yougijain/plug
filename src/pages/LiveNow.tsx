@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Post } from '../types/index';
 import { useAppStore } from '../lib/store';
+import { usePosts } from '../hooks/usePosts';
 import { formatDistanceToNow } from 'date-fns';
 import { 
   BoltIcon, 
@@ -17,6 +18,7 @@ interface LiveNowProps {
 
 const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const { posts: flashPosts } = usePosts({ isFlash: true });
   const navigate = useNavigate();
   const { savePost, addToCart } = useAppStore();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -81,8 +83,13 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
   ], []);
 
   useEffect(() => {
-    setPosts(mockPosts);
-  }, [mockPosts]);
+    // Prefer real flash posts when available; fall back to mock
+    if (flashPosts && flashPosts.length > 0) {
+      setPosts(flashPosts);
+    } else {
+      setPosts(mockPosts);
+    }
+  }, [flashPosts, mockPosts]);
 
   useEffect(() => {
     // Simulate real-time updates every 30 seconds
@@ -148,12 +155,13 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
     return `${minutes}m`;
   };
 
-  const getProgressPercentage = (expiresAt: string) => {
-    const now = new Date();
-    const expires = new Date(expiresAt);
-    const diff = expires.getTime() - now.getTime();
-    const total = 30 * 60 * 1000; // 30 minutes in ms
-    return Math.max(0, Math.min(100, ((total - diff) / total) * 100));
+  const getProgressPercentage = (expiresAt: string, createdAt?: string) => {
+    const now = Date.now();
+    const expires = new Date(expiresAt).getTime();
+    const started = createdAt ? new Date(createdAt).getTime() : now;
+    const total = Math.max(1, expires - started);
+    const elapsed = Math.max(0, Math.min(total, now - started));
+    return Math.max(0, Math.min(100, (elapsed / total) * 100));
   };
 
   const isUrgent = (expiresAt: string) => {
@@ -178,11 +186,47 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
         break;
     }
     
+    // Hide expired flash deals
+    filtered = filtered.filter(p => !p.is_flash_deal || (p.flash_deal_expires_at && new Date(p.flash_deal_expires_at).getTime() > Date.now()))
     return filtered;
   }, [posts, selectedFilter]);
 
+  const getCategoryIcon = (category?: string) => {
+    const key = (category || '').toLowerCase();
+    if (key.includes('ticket')) return { icon: '🎟', label: 'Ticket' };
+    if (key.includes('food')) return { icon: '🍕', label: 'Food' };
+    if (key.includes('elect')) return { icon: '📱', label: 'Electronics' };
+    if (key.includes('book')) return { icon: '📚', label: 'Books' };
+    if (key.includes('service')) return { icon: '🤝', label: 'Service' };
+    if (key.includes('transport') || key.includes('ride')) return { icon: '🚗', label: 'Ride' };
+    if (key.includes('clothing')) return { icon: '👕', label: 'Clothing' };
+    if (key.includes('furniture')) return { icon: '🪑', label: 'Furniture' };
+    if (key.includes('sport')) return { icon: '⚽', label: 'Sports' };
+    return { icon: '📦', label: 'Item' };
+  };
+
+  const renderThumb = (post: Post) => {
+    if (post.images && post.images.length > 0) {
+      return <img src={post.images[0]} alt={post.title} className="h-16 w-16 rounded-lg object-cover" />
+    }
+    const { icon, label } = getCategoryIcon(post.category || post.type);
+    return (
+      <div className="h-16 w-16 rounded-lg bg-[#F5F5F5] flex flex-col items-center justify-center">
+        <span className="text-2xl text-[#6F7A85]">{icon}</span>
+        <span className="text-[10px] text-[#9AA5B1] leading-tight mt-0.5">{label}</span>
+      </div>
+    );
+  };
+
+  // Re-render every second to update timers/progress smoothly
+  const [, setNowTick] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setNowTick((n) => n + 1), 1000)
+    return () => clearInterval(t)
+  }, [])
+
   return (
-    <div className="min-h-screen bg-[#F5F7FA]">
+    <div className="min-h-screen bg-[#FAFAFA]">
       {/* Header */}
       <div className="bg-white border-b border-[#E6E9EE] px-4 py-4">
         <div className="flex items-center justify-between">
@@ -257,36 +301,50 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
               
               {/* Progress Bar for Flash Deals */}
               {post.is_flash_deal && post.flash_deal_expires_at && (
-                <div className="h-1 bg-gray-200">
+                <div className="h-1.5 bg-gray-200">
                   <div 
-                    className="h-1 bg-[#FF6B35] transition-all duration-1000"
-                    style={{ width: `${getProgressPercentage(post.flash_deal_expires_at)}%` }}
+                    className="h-1.5 bg-[#FF6B35] transition-all duration-1000"
+                    style={{ width: `${getProgressPercentage(post.flash_deal_expires_at, post.created_at)}%` }}
                   ></div>
                 </div>
               )}
               
               <div className="p-4">
+                {/* Status pills */}
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {post.is_flash_deal && (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#FFB400] text-[#0E1F33]">Flash Deal</span>
+                  )}
+                  {post.is_flash_deal && post.flash_deal_expires_at && isUrgent(post.flash_deal_expires_at) && (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-[#EB5757] text-white">Ending Soon</span>
+                  )}
+                </div>
+
                 <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-[#0E1F33] text-lg mb-1">{post.title}</h3>
-                    <p className="text-sm text-gray-600">{post.description}</p>
+                  {/* Thumbnail */}
+                  <div className="mr-3 flex-shrink-0">{renderThumb(post)}</div>
+
+                  {/* Text column */}
+                  <div className="flex-1 min-w-0 pr-2">
+                    <h3 className="font-semibold text-[16px] text-[#2B2B2B] leading-snug truncate">{post.title}</h3>
+                    <p className="text-[14px] text-[#6F7A85] leading-snug line-clamp-2">{post.description}</p>
                   </div>
-                  {post.price && (
-                    <span className="text-xl font-bold text-[#FF6B35] ml-2">
-                      ${post.price}
-                    </span>
+
+                  {/* Price */}
+                  {typeof post.price === 'number' && (
+                    <span className="text-[18px] font-bold text-[#FF6B35] ml-2 whitespace-nowrap">${post.price}</span>
                   )}
                 </div>
                 
-                <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                  <span>{post.location}</span>
-                  <div className="flex items-center space-x-3">
+                <div className="flex items-center justify-between text-[14px] text-[#6F7A85] mb-3">
+                  <span className="truncate">{post.location}</span>
+                  <div className="flex items-center space-x-4 opacity-90">
                     <div className="flex items-center space-x-1">
-                      <ClockIcon className="h-3 w-3" />
+                      <ClockIcon className="h-4 w-4 text-[#6F7A85]" />
                       <span>{formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}</span>
                     </div>
-                    <div className="flex items-center space-x-1 text-gray-600">
-                      <EyeIcon className="h-4 w-4" />
+                    <div className="flex items-center space-x-1">
+                      <EyeIcon className="h-4 w-4 text-[#6F7A85]" />
                       <span>12 watching</span>
                     </div>
                   </div>
@@ -317,13 +375,13 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
                 <div className="flex space-x-3">
                   <button 
                     onClick={() => handleContact(post.id)}
-                    className="flex-1 bg-[#FF6B35] text-white py-3 px-4 rounded-xl text-sm font-semibold hover:brightness-110 transition-colors"
+                    className="flex-1 bg-[#FF6B35] text-white py-3 px-4 rounded-lg text-[14px] font-semibold hover:brightness-110 transition-colors"
                   >
                     Contact
                   </button>
                   <button 
                     onClick={() => handleSave(post.id)}
-                    className="flex-1 border border-[#E6E9EE] text-[#0E1F33] py-3 px-4 rounded-xl text-sm font-semibold hover:bg-[#FFEEE6] transition-colors"
+                    className="flex-1 bg-white border border-[#E0E0E0] text-[#2B2B2B] py-3 px-4 rounded-lg text-[14px] font-semibold hover:bg-gray-50 transition-colors"
                   >
                     Save
                   </button>

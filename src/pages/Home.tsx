@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { usePosts } from '../hooks/usePosts';
@@ -9,52 +10,46 @@ import {
   MagnifyingGlassIcon, 
   FunnelIcon, 
   HeartIcon,
-  BellIcon,
-  PlusIcon
+  BellIcon
 } from '@heroicons/react/24/outline';
 import { EmptyStateIcon, LogoIcon } from '../components/SVGIcon';
+import CategoryPlaceholder from '../components/CategoryPlaceholder';
 
 const Home: React.FC = () => {
-  const { currentUser } = useAuth();
+  // Note: currentUser not used in Home; remove to avoid lint warning
+  // const { currentUser } = useAuth();
   const { posts, isLoading } = usePosts();
   const { addToCart, toggleSavedPost } = useAppStore();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const categoryRef = useRef<HTMLDivElement | null>(null);
   const [hasNotifications, setHasNotifications] = useState(true); // Mock - wire to real notifications
+  const location = useLocation();
+  const [toast, setToast] = useState<string | null>(null);
 
   // Test Supabase connection
+  // Removed connection test to avoid creating unused bindings and logs in Home
+
+  // Toast handler for redirects
   useEffect(() => {
-    const testConnection = async () => {
-      try {
-        const { supabase } = await import('../lib/supabase');
-        const { data, error } = await supabase
-          .from('posts')
-          .select('id')
-          .limit(1);
-        
-        if (error) {
-          console.error('❌ Supabase connection failed:', error);
-        } else {
-          console.log('✅ Supabase connected successfully');
-        }
-      } catch (err) {
-        console.error('❌ Failed to test Supabase connection:', err);
-      }
-    };
-    
-    testConnection();
-  }, []);
+    const state = location.state as any;
+    if (state?.toast) {
+      setToast(state.toast);
+      // Clear browser history state to prevent repeat on back
+      window.history.replaceState({}, document.title);
+      const t = setTimeout(() => setToast(null), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [location.state]);
 
   const handleSavePost = (post: Post) => {
     toggleSavedPost(post);
     addToCart(post);
   };
 
-  const handlePostClick = (post: Post) => {
-    // Navigate to post detail or open modal
-    console.log('Post clicked:', post.id);
-  };
+  // const handlePostClick = (post: Post) => {};
 
   const handleCreatePost = () => {
     navigate('/post');
@@ -75,19 +70,46 @@ const Home: React.FC = () => {
   };
 
   // Filter posts based on search and category
-  const filteredPosts = posts.filter(post => {
+  const allHomePosts = [...posts.filter(p => !p.is_flash_deal)];
+  const filteredPosts = allHomePosts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          post.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'All Categories' || post.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  const categories = ['All Categories', 'Electronics', 'Books', 'Clothing', 'Furniture', 'Services'];
+  const categories = [
+    { value: 'All Categories', icon: '🏷️' },
+    { value: 'Electronics', icon: '📱' },
+    { value: 'Books', icon: '📚' },
+    { value: 'Furniture', icon: '🪑' },
+    { value: 'Clothing', icon: '👕' },
+    { value: 'Sports', icon: '⚽' },
+    { value: 'Tickets', icon: '🎟' }
+  ];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (categoryRef.current && !categoryRef.current.contains(event.target as Node)) {
+        setIsCategoryOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
          <div className="min-h-screen bg-[#FAFAFA]">
       {/* Header */}
       <div className="bg-[#0E1F33] text-white h-16 relative">
+        {/* Toast */}
+        {toast && (
+          <div className="absolute left-1/2 -translate-x-1/2 top-2 z-50">
+            <div className="px-3 py-1.5 bg-[#0E1F33] text-white text-sm rounded shadow">
+              {toast}
+            </div>
+          </div>
+        )}
         {/* Subtle inner highlight line */}
         <div className="absolute bottom-0 left-0 right-0 h-px bg-white opacity-[0.08]"></div>
         
@@ -101,9 +123,9 @@ const Home: React.FC = () => {
                 <LogoIcon className="h-6 w-6" />
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-lg font-bold text-white leading-none">Plug</h1>
-              <span className="text-xs font-medium text-[#D0D6E1] leading-none">Plug into campus life.</span>
+            <div className="flex items-end space-x-2 flex-nowrap">
+              <h1 className="text-xl font-bold text-white leading-none whitespace-nowrap relative top-[2px]">Plug</h1>
+              <span className="text-[11px] font-medium text-[#D0D6E1] leading-none whitespace-nowrap">Plug into campus life.</span>
             </div>
           </div>
           
@@ -146,13 +168,36 @@ const Home: React.FC = () => {
               className="w-full h-10 pl-10 pr-4 bg-gray-50 border border-[#E6E9EE] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent"
             />
           </div>
-          <button
-            onClick={() => setSelectedCategory(selectedCategory === 'All Categories' ? 'Electronics' : 'All Categories')}
-            className="h-10 px-4 bg-white border border-[#E6E9EE] rounded-xl text-sm font-medium text-[#0E1F33] flex items-center space-x-2 hover:bg-gray-50 transition-colors"
-          >
-            <FunnelIcon className="h-4 w-4" />
-            <span>{selectedCategory}</span>
-          </button>
+          <div className="relative" ref={categoryRef}>
+            <button
+              onClick={() => setIsCategoryOpen((v) => !v)}
+              className="h-10 px-4 bg-white border border-[#E6E9EE] rounded-xl text-sm font-medium text-[#0E1F33] flex items-center space-x-2 hover:bg-gray-50 transition-colors"
+            >
+              <FunnelIcon className="h-4 w-4" />
+              <span>{selectedCategory}</span>
+            </button>
+            {isCategoryOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white border border-[#E6E9EE] rounded-xl shadow-lg z-20 overflow-hidden">
+                <div className="max-h-72 overflow-y-auto py-1">
+                  {categories.map((c) => (
+                    <button
+                      key={c.value}
+                      onClick={() => {
+                        setSelectedCategory(c.value);
+                        setIsCategoryOpen(false);
+                      }}
+                      className={`w-full flex items-center space-x-3 px-3 py-2 text-sm hover:bg-gray-50 text-left ${
+                        selectedCategory === c.value ? 'bg-[#FFEEE6] text-[#FF6B35]' : 'text-[#0E1F33]'
+                      }`}
+                    >
+                      <span className="w-5 text-center">{c.icon}</span>
+                      <span>{c.value}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -229,14 +274,20 @@ const Home: React.FC = () => {
                 }}
                 whileHover={{ scale: 1.02 }}
                 className="bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-shadow border border-[#ECECEC]"
-                onClick={() => handlePostClick(post)}
+                onClick={() => navigate(`/post/${post.id}`)}
               >
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="h-10 w-10 bg-[#F5F7FA] rounded-full flex items-center justify-center">
-                    <span className="text-sm font-semibold text-[#0E1F33]">
-                      {post.users?.name?.charAt(0) || 'U'}
-                    </span>
+                {/* Thumbnail */}
+                {Array.isArray(post.images) && post.images.length > 0 && (
+                  <div className="mb-3 -mx-4 -mt-4">
+                    <img src={post.images[0]} alt={post.title} className="w-full h-40 object-cover rounded-t-xl" />
                   </div>
+                )}
+                <div className="flex items-center space-x-3 mb-3">
+                  {Array.isArray(post.images) && post.images.length > 0 ? (
+                    <img src={post.images[0]} alt={post.title} className="h-10 w-10 rounded-full object-cover" onClick={(e) => { e.stopPropagation(); navigate(`/post/${post.id}`) }} />
+                  ) : (
+                    <CategoryPlaceholder category={post.category || post.type} size={40} showLabel={false} />
+                  )}
                   <div className="flex-1">
                     <p className="font-semibold text-[#0E1F33]">{post.users?.name || 'Anonymous'}</p>
                     <p className="text-sm text-gray-500">{post.location}</p>
@@ -257,7 +308,10 @@ const Home: React.FC = () => {
                   <span className="text-lg font-bold text-[#FF6B35]">
                     {post.price ? `$${post.price}` : 'Free'}
                   </span>
-                  <div className="flex space-x-2">
+                  <div className="flex items-center space-x-3">
+                    {post.expires_at && (
+                      <span className="text-xs text-gray-500">Expires {new Date(post.expires_at).toLocaleDateString()}</span>
+                    )}
                     {post.tags.slice(0, 3).map((tag) => (
                       <span 
                         key={tag}
