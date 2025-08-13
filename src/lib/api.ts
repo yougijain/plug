@@ -8,60 +8,12 @@ type Message = Tables['messages']['Row']
 type Ride = Tables['rides']['Row']
 type Conversation = Tables['conversations']['Row']
 
-// Check if we're in demo mode
-const isDemoMode = !process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_ANON_KEY
-
-// Demo data for testing
-const DEMO_USER: User = {
-  id: 'demo-user-1',
-  name: 'Demo User',
-  email: 'demo@example.com',
-  university: 'Purdue University',
-  avatar: undefined,
-  verified: true,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-}
-
-const DEMO_POSTS: Post[] = [
-  {
-    id: '1',
-    user_id: 'demo-user-1',
-    type: 'item',
-    title: 'iPhone 13 Pro',
-    description: 'Perfect condition, 128GB, comes with case and charger.',
-    price: 800,
-    category: 'Electronics',
-    location: 'Purdue Campus',
-    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    status: 'active',
-    tags: ['iphone', 'electronics', 'phone'],
-  },
-  {
-    id: '2',
-    user_id: 'demo-user-1',
-    type: 'service',
-    title: 'Math Tutoring',
-    description: 'Calculus and linear algebra tutoring. $20/hour.',
-    price: 20,
-    category: 'Education',
-    location: 'Indiana University Campus',
-    created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    status: 'active',
-    tags: ['tutoring', 'math', 'education'],
-  },
-]
+// Final app mode: No demo data or fallbacks
 
 // User API
 export const userApi = {
   getCurrentUser: async (): Promise<User | null> => {
     console.log('🔍 [userApi.getCurrentUser] Starting...')
-    console.log('🔍 [userApi.getCurrentUser] isDemoMode:', isDemoMode)
-    
-    if (isDemoMode) {
-      console.log('🔍 [userApi.getCurrentUser] Returning demo user')
-      return DEMO_USER
-    }
     
     try {
       console.log('🔍 [userApi.getCurrentUser] Getting auth user...')
@@ -102,11 +54,6 @@ export const userApi = {
   updateProfile: async (userId: string, updates: Partial<User>) => {
     console.log('🔍 [userApi.updateProfile] Starting...', { userId, updates })
     
-    if (isDemoMode) {
-      console.log('🔍 [userApi.updateProfile] Returning demo user with updates')
-      return { ...DEMO_USER, ...updates }
-    }
-    
     try {
       console.log('🔍 [userApi.updateProfile] Updating user in database...')
       const { data, error } = await supabase
@@ -134,23 +81,18 @@ export const userApi = {
   ) => {
     console.log('🔍 [userApi.createUser] Starting...', params)
     
-    if (isDemoMode) {
-      console.log('🔍 [userApi.createUser] Returning demo user')
-      return { ...params, id: 'demo-user-1', created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
-    }
-    
     try {
       console.log('🔍 [userApi.createUser] Inserting user into database...')
       const { data, error } = await supabase
         .from('users')
-        .insert({
+        .upsert({
           id: params.id,
           email: params.email,
           name: params.name,
           university: params.university,
           avatar: params.avatar,
           verified: params.verified ?? false,
-        })
+        }, { onConflict: 'id' })
         .select()
         .single()
       
@@ -175,13 +117,9 @@ export const postsApi = {
     category?: string
     status?: string
     userId?: string
+    isFlash?: boolean
   }): Promise<Post[]> => {
     console.log('🔍 [postsApi.getAll] Starting...', filters)
-    
-    if (isDemoMode) {
-      console.log('🔍 [postsApi.getAll] Demo mode - returning demo posts')
-      return DEMO_POSTS
-    }
     
     try {
       console.log('🔍 [postsApi.getAll] Building query...')
@@ -207,6 +145,9 @@ export const postsApi = {
       if (filters?.userId) {
         query = query.eq('user_id', filters.userId)
       }
+      if (typeof filters?.isFlash === 'boolean') {
+        query = query.eq('is_flash_deal', filters.isFlash)
+      }
       
       console.log('🔍 [postsApi.getAll] Executing query...')
       const { data, error } = await query
@@ -226,11 +167,6 @@ export const postsApi = {
 
   getById: async (id: string): Promise<Post | null> => {
     console.log('🔍 [postsApi.getById] Starting...', id)
-    
-    if (isDemoMode) {
-      console.log('🔍 [postsApi.getById] Demo mode - returning demo post')
-      return DEMO_POSTS.find(post => post.id === id) || null
-    }
     
     try {
       console.log('🔍 [postsApi.getById] Querying post...')
@@ -263,19 +199,45 @@ export const postsApi = {
   create: async (postData: Omit<Post, 'id' | 'created_at'>): Promise<Post> => {
     console.log('🔍 [postsApi.create] Starting...', postData)
     
-    if (isDemoMode) {
-      console.log('🔍 [postsApi.create] Demo mode - returning mock post')
-      const newPost: Post = {
-        id: Date.now().toString(),
-        ...postData,
-        created_at: new Date().toISOString(),
-        status: 'active',
-        tags: postData.tags || []
-      }
-      return newPost
-    }
-    
     try {
+      // Ensure the posting user exists in public.users to satisfy RLS
+      console.log('🔍 [postsApi.create] Ensuring user row exists for', postData.user_id)
+      const { data: existingUser, error: userSelectError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', postData.user_id)
+        .maybeSingle()
+
+      if (userSelectError) {
+        console.warn('⚠️ [postsApi.create] user lookup error (continuing to upsert):', userSelectError)
+      }
+
+      if (!existingUser) {
+        console.log('🔍 [postsApi.create] No user row found; attempting upsert from auth metadata')
+        const { data: authData } = await supabase.auth.getUser()
+        const authUser = authData?.user as any
+        const fallbackEmail = authUser?.email || 'user@example.com'
+        const fallbackName = authUser?.user_metadata?.name || (fallbackEmail.split('@')[0] || 'User')
+        const fallbackUniversity = authUser?.user_metadata?.university || ''
+        const fallbackAvatar = authUser?.user_metadata?.avatar
+
+        const { error: upsertErr } = await supabase
+          .from('users')
+          .upsert({
+            id: postData.user_id,
+            email: fallbackEmail,
+            name: fallbackName,
+            university: fallbackUniversity,
+            avatar: fallbackAvatar,
+            verified: false
+          }, { onConflict: 'id' })
+        if (upsertErr) {
+          console.error('❌ [postsApi.create] Failed to upsert user before posting:', upsertErr)
+          throw upsertErr
+        }
+        console.log('✅ [postsApi.create] User row ensured')
+      }
+
       console.log('🔍 [postsApi.create] Creating post...')
       const { data, error } = await supabase
         .from('posts')
@@ -313,13 +275,6 @@ export const postsApi = {
   update: async (id: string, updates: Partial<Post>): Promise<Post> => {
     console.log('🔍 [postsApi.update] Starting...', { id, updates })
     
-    if (isDemoMode) {
-      console.log('🔍 [postsApi.update] Demo mode - returning updated mock post')
-      const existingPost = DEMO_POSTS.find(post => post.id === id)
-      if (!existingPost) throw new Error('Post not found')
-      return { ...existingPost, ...updates }
-    }
-    
     try {
       console.log('🔍 [postsApi.update] Updating post...')
       const { data, error } = await supabase
@@ -345,11 +300,6 @@ export const postsApi = {
   delete: async (id: string): Promise<void> => {
     console.log('🔍 [postsApi.delete] Starting...', id)
     
-    if (isDemoMode) {
-      console.log('🔍 [postsApi.delete] Demo mode - mock delete')
-      return
-    }
-    
     try {
       console.log('🔍 [postsApi.delete] Deleting post...')
       const { error } = await supabase
@@ -374,30 +324,6 @@ export const postsApi = {
 export const messagesApi = {
   getConversations: async (userId: string): Promise<Conversation[]> => {
     console.log('🔍 [messagesApi.getConversations] Starting...', userId)
-    
-    if (isDemoMode) {
-      console.log('🔍 [messagesApi.getConversations] Demo mode - returning mock conversations')
-      const mockConversations = [
-        {
-          id: 'conv1',
-          participants: [userId, 'user2'],
-          last_message_id: 'msg1',
-          unread_count: 2,
-          created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          id: 'conv2',
-          participants: [userId, 'user3'],
-          last_message_id: 'msg3',
-          unread_count: 0,
-          created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-          updated_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-        }
-      ]
-      console.log('🔍 [messagesApi.getConversations] Mock conversations:', mockConversations)
-      return mockConversations
-    }
     
     try {
       console.log('🔍 [messagesApi.getConversations] Querying conversations...')
@@ -446,43 +372,6 @@ export const messagesApi = {
 
   getMessages: async (conversationId: string): Promise<Message[]> => {
     console.log('🔍 [messagesApi.getMessages] Starting...', conversationId)
-    
-    if (isDemoMode) {
-      console.log('🔍 [messagesApi.getMessages] Demo mode - returning mock messages')
-      // Get the current user ID from the conversation participants
-      const currentUserId = 'demo-user-1'; // For demo mode
-      const otherUserId = 'user2';
-      
-      return [
-        {
-          id: 'msg1',
-          sender_id: otherUserId,
-          receiver_id: currentUserId,
-          conversation_id: conversationId,
-          content: 'Hey! I saw your post about the iPhone. Is it still available?',
-          created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          read: false,
-        },
-        {
-          id: 'msg2',
-          sender_id: currentUserId,
-          receiver_id: otherUserId,
-          conversation_id: conversationId,
-          content: 'Yes, it is! Are you interested?',
-          created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-          read: true,
-        },
-        {
-          id: 'msg3',
-          sender_id: otherUserId,
-          receiver_id: currentUserId,
-          conversation_id: conversationId,
-          content: 'Great! Can we meet on campus tomorrow?',
-          created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-          read: false,
-        }
-      ]
-    }
     
     try {
       console.log('🔍 [messagesApi.getMessages] Querying messages...')
@@ -568,16 +457,6 @@ export const messagesApi = {
   sendMessage: async (messageData: Omit<Message, 'id' | 'created_at'>): Promise<Message> => {
     console.log('🔍 [messagesApi.sendMessage] Starting...', messageData)
     
-    if (isDemoMode) {
-      console.log('🔍 [messagesApi.sendMessage] Demo mode - returning mock message')
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        ...messageData,
-        created_at: new Date().toISOString(),
-      }
-      return newMessage
-    }
-    
     try {
       console.log('🔍 [messagesApi.sendMessage] Sending message...')
       const { data, error } = await supabase
@@ -629,17 +508,6 @@ export const messagesApi = {
 
   getOrCreateConversation: async (participants: string[]): Promise<Conversation> => {
     console.log('🔍 [messagesApi.getOrCreateConversation] Starting...', participants)
-    
-    if (isDemoMode) {
-      console.log('🔍 [messagesApi.getOrCreateConversation] Demo mode - returning mock conversation')
-      return {
-        id: 'conv' + Date.now(),
-        participants,
-        unread_count: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }
-    }
     
     try {
       console.log('🔍 [messagesApi.getOrCreateConversation] Looking for existing conversation...')

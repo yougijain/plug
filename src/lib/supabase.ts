@@ -1,33 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../types/database'
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || 'https://placeholder.supabase.co'
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || 'placeholder-key'
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY
 
-// Debug environment variables
-console.log('🔍 [supabase] Environment variables check:')
-console.log('🔍 [supabase] REACT_APP_SUPABASE_URL:', process.env.REACT_APP_SUPABASE_URL)
-console.log('🔍 [supabase] REACT_APP_SUPABASE_ANON_KEY:', process.env.REACT_APP_SUPABASE_ANON_KEY ? 'EXISTS' : 'MISSING')
-console.log('🔍 [supabase] REACT_APP_SUPABASE_ANON_KEY length:', process.env.REACT_APP_SUPABASE_ANON_KEY?.length || 0)
-
-// Check if we're in demo mode
-const isDemoMode = !process.env.REACT_APP_SUPABASE_URL || 
-                   !process.env.REACT_APP_SUPABASE_ANON_KEY ||
-                   process.env.REACT_APP_SUPABASE_URL === 'https://placeholder.supabase.co' ||
-                   process.env.REACT_APP_SUPABASE_ANON_KEY === 'placeholder-key'
-
-console.log('🔍 [supabase] Initializing Supabase client...')
-console.log('🔍 [supabase] URL:', supabaseUrl)
-console.log('🔍 [supabase] isDemoMode:', isDemoMode)
-console.log('🔍 [supabase] URL check:', !process.env.REACT_APP_SUPABASE_URL)
-console.log('🔍 [supabase] KEY check:', !process.env.REACT_APP_SUPABASE_ANON_KEY)
-console.log('🔍 [supabase] URL placeholder check:', process.env.REACT_APP_SUPABASE_URL === 'https://placeholder.supabase.co')
-console.log('🔍 [supabase] KEY placeholder check:', process.env.REACT_APP_SUPABASE_ANON_KEY === 'placeholder-key')
-
-if (isDemoMode) {
-  console.warn('⚠️ [supabase] Missing or invalid Supabase environment variables. App will run in demo mode.')
-} else {
-  console.log('✅ [supabase] Supabase environment variables detected. Attempting real connection...')
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Supabase environment variables are missing. Please set REACT_APP_SUPABASE_URL and REACT_APP_SUPABASE_ANON_KEY')
 }
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
@@ -42,24 +20,6 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 export const auth = {
   signUp: async (email: string, password: string, userData: any) => {
     console.log('🔍 [auth.signUp] Starting...', { email, userData })
-    
-    if (isDemoMode) {
-      console.log('🔍 [auth.signUp] Demo mode - returning mock success')
-      // Return mock success in demo mode
-      return { 
-        data: { 
-          user: { 
-            id: 'demo-user', 
-            email: email,
-            user_metadata: {
-              ...userData,
-              university: 'Purdue University'
-            }
-          } 
-        }, 
-        error: null 
-      }
-    }
     
     try {
       console.log('🔍 [auth.signUp] Calling supabase.auth.signUp...')
@@ -87,25 +47,6 @@ export const auth = {
   signIn: async (email: string, password: string) => {
     console.log('🔍 [auth.signIn] Starting...', { email })
     
-    if (isDemoMode) {
-      console.log('🔍 [auth.signIn] Demo mode - returning mock success')
-      // Return mock success in demo mode
-      return { 
-        data: { 
-          user: { 
-            id: 'demo-user', 
-            email: email,
-            user_metadata: {
-              name: 'Demo User',
-              university: 'Purdue University'
-            }
-          },
-          session: { user: { id: 'demo-user', email: email } }
-        }, 
-        error: null 
-      }
-    }
-    
     try {
       console.log('🔍 [auth.signIn] Calling supabase.auth.signInWithPassword...')
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -129,11 +70,6 @@ export const auth = {
   signOut: async () => {
     console.log('🔍 [auth.signOut] Starting...')
     
-    if (isDemoMode) {
-      console.log('🔍 [auth.signOut] Demo mode - returning mock success')
-      return { error: null }
-    }
-    
     try {
       console.log('🔍 [auth.signOut] Calling supabase.auth.signOut...')
       const { error } = await supabase.auth.signOut()
@@ -153,21 +89,6 @@ export const auth = {
 
   getCurrentUser: async () => {
     console.log('🔍 [auth.getCurrentUser] Starting...')
-    
-    if (isDemoMode) {
-      console.log('🔍 [auth.getCurrentUser] Demo mode - returning mock user')
-      return { 
-        user: { 
-          id: 'demo-user', 
-          email: 'demo@example.com',
-          user_metadata: {
-            name: 'Demo User',
-            university: 'Purdue University'
-          }
-        }, 
-        error: null 
-      }
-    }
     
     try {
       console.log('🔍 [auth.getCurrentUser] Calling supabase.auth.getUser...')
@@ -189,29 +110,6 @@ export const auth = {
   onAuthStateChange: (callback: (event: string, session: any) => void) => {
     console.log('🔍 [auth.onAuthStateChange] Setting up auth state listener...')
     
-    if (isDemoMode) {
-      console.log('🔍 [auth.onAuthStateChange] Demo mode - returning mock subscription')
-      // Return a mock subscription that immediately calls the callback
-      const mockSubscription = {
-        unsubscribe: () => {
-          console.log('🔍 [auth.onAuthStateChange] Mock subscription unsubscribed')
-        }
-      }
-      
-      // Simulate immediate sign-in for demo mode
-      setTimeout(() => {
-        console.log('🔍 [auth.onAuthStateChange] Demo mode - simulating SIGNED_IN event')
-        callback('SIGNED_IN', { 
-          user: { 
-            id: 'demo-user', 
-            email: 'demo@example.com' 
-          } 
-        })
-      }, 100)
-      
-      return { data: { subscription: mockSubscription } }
-    }
-    
     try {
       console.log('🔍 [auth.onAuthStateChange] Calling supabase.auth.onAuthStateChange...')
       const result = supabase.auth.onAuthStateChange(callback)
@@ -223,3 +121,23 @@ export const auth = {
     }
   }
 } 
+
+// Storage helpers
+export const storage = {
+  uploadPostImages: async (files: File[], userId: string): Promise<string[]> => {
+    const bucket = 'post-images'
+    const urls: string[] = []
+    for (const file of files) {
+      const ext = file.name.split('.').pop() || 'jpg'
+      const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { error: upErr } = await supabase.storage.from(bucket).upload(path, file, {
+        upsert: false,
+        contentType: file.type || 'image/jpeg'
+      })
+      if (upErr) throw upErr
+      const { data } = supabase.storage.from(bucket).getPublicUrl(path)
+      urls.push(data.publicUrl)
+    }
+    return urls
+  }
+}

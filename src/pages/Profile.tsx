@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useAppStore } from '../lib/store';
-import { Post } from '../types/index';
+// import { Post } from '../types/index';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Cog6ToothIcon, 
@@ -13,9 +13,12 @@ import {
   ShoppingBagIcon,
   ArrowUpIcon,
   MinusIcon,
-  CheckIcon
+  CheckIcon,
+  LinkIcon
 } from '@heroicons/react/24/outline';
 import { SavedEmptyIcon, SellingEmptyIcon, BuyingEmptyIcon } from '../components/SVGIcon';
+import CategoryPlaceholder from '../components/CategoryPlaceholder';
+import { usePosts } from '../hooks/usePosts';
 
 const Profile: React.FC = () => {
   const { currentUser, signOut } = useAuth();
@@ -24,35 +27,18 @@ const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'saved' | 'selling' | 'buying'>('saved');
   const [showSettings, setShowSettings] = useState(false);
 
-  // Mock data for selling and buying
-  const sellingItems: Post[] = [
-    {
-      id: '1',
-      user_id: currentUser?.id || '',
-      type: 'item',
-      title: 'iPhone 13 Pro',
-      description: 'Perfect condition, comes with original box',
-      price: 750,
-      category: 'Electronics',
-      location: 'Purdue Campus',
-      created_at: new Date().toISOString(),
-      status: 'active',
-      tags: ['electronics', 'phone'],
-    },
-    {
-      id: '2',
-      user_id: currentUser?.id || '',
-      type: 'item',
-      title: 'Calculus Textbook',
-      description: 'Used but in good condition',
-      price: 45,
-      category: 'Books',
-      location: 'Purdue Campus',
-      created_at: new Date().toISOString(),
-      status: 'active',
-      tags: ['books', 'textbook'],
-    }
-  ];
+  // Mock social media data - in a real app, this would come from the user's profile
+  const socialMedia = {
+    instagram: '@demo_user',
+    snapchat: 'demo_user123',
+    twitter: '@demo_user',
+    linkedin: 'demo-user-profile'
+  };
+
+  // User's posts (selling)
+  const { posts: userPosts, isLoading: isLoadingUserPosts } = usePosts(
+    currentUser?.id ? { userId: currentUser.id } : undefined
+  );
 
   const buyingOffers = [
     {
@@ -190,12 +176,83 @@ const Profile: React.FC = () => {
         </div>
       </div>
 
+      {/* Social Media Section */}
+      <div className="bg-white px-4 py-4 border-b border-[#E6E9EE]">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-[#0E1F33]">Social Media</h3>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="text-xs text-[#FF6B35] font-medium hover:text-[#E55A2B] transition-colors"
+          >
+            Edit
+          </button>
+        </div>
+        <div className="space-y-2">
+          {socialMedia.instagram && (
+            <div className="flex items-center justify-between py-2 px-3 bg-[#F5F7FA] rounded-lg">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">IG</span>
+                </div>
+                <span className="text-sm text-[#0E1F33]">Instagram</span>
+              </div>
+              <span className="text-sm text-gray-600">{socialMedia.instagram}</span>
+            </div>
+          )}
+          {socialMedia.snapchat && (
+            <div className="flex items-center justify-between py-2 px-3 bg-[#F5F7FA] rounded-lg">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 bg-yellow-400 rounded flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">SC</span>
+                </div>
+                <span className="text-sm text-[#0E1F33]">Snapchat</span>
+              </div>
+              <span className="text-sm text-gray-600">{socialMedia.snapchat}</span>
+            </div>
+          )}
+          {socialMedia.twitter && (
+            <div className="flex items-center justify-between py-2 px-3 bg-[#F5F7FA] rounded-lg">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 bg-blue-400 rounded flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">TW</span>
+                </div>
+                <span className="text-sm text-[#0E1F33]">Twitter</span>
+              </div>
+              <span className="text-sm text-gray-600">{socialMedia.twitter}</span>
+            </div>
+          )}
+          {socialMedia.linkedin && (
+            <div className="flex items-center justify-between py-2 px-3 bg-[#F5F7FA] rounded-lg">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">LI</span>
+                </div>
+                <span className="text-sm text-[#0E1F33]">LinkedIn</span>
+              </div>
+              <span className="text-sm text-gray-600">{socialMedia.linkedin}</span>
+            </div>
+          )}
+          {!socialMedia.instagram && !socialMedia.snapchat && !socialMedia.twitter && !socialMedia.linkedin && (
+            <div className="text-center py-4">
+              <LinkIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">No social media added yet</p>
+              <button
+                onClick={() => setShowSettings(true)}
+                className="text-xs text-[#FF6B35] font-medium mt-1 hover:text-[#E55A2B] transition-colors"
+              >
+                Add your socials
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Tabs */}
       <div className="bg-white px-4 py-3 border-b border-[#E6E9EE]">
         <div className="flex space-x-1">
           {[
             { key: 'saved', label: 'Saved', count: savedPosts.length, icon: HeartIcon },
-            { key: 'selling', label: 'Selling', count: sellingItems.length, icon: TagIcon },
+            { key: 'selling', label: 'Selling', count: userPosts.length, icon: TagIcon },
             { key: 'buying', label: 'Buying', count: buyingOffers.length, icon: ShoppingBagIcon }
           ].map((tab) => (
             <button
@@ -265,25 +322,23 @@ const Profile: React.FC = () => {
 
         {activeTab === 'selling' && (
           <div>
-            {sellingItems.length > 0 ? (
+            {isLoadingUserPosts ? (
+              <div className="text-center py-12 text-gray-500">Loading your posts...</div>
+            ) : userPosts.length > 0 ? (
               <div className="space-y-4">
-                {sellingItems.map((item) => (
+                {userPosts.map((item) => (
                   <div key={item.id} className="bg-white rounded-xl p-4 shadow-lg">
                     <div className="flex items-center space-x-3 mb-3">
-                      <div className="h-12 w-12 bg-[#F5F7FA] rounded-lg flex items-center justify-center">
-                        <span className="text-sm font-semibold text-[#0E1F33]">
-                          {item.title.charAt(0)}
-                        </span>
-                      </div>
+                      <CategoryPlaceholder category={item.category || item.type} size={48} />
                       <div className="flex-1">
                         <h3 className="font-semibold text-[#0E1F33]">{item.title}</h3>
                         <p className="text-sm text-gray-600">{item.location}</p>
                         <p className="text-lg font-bold text-[#FF6B35]">
-                          ${item.price}
+                          {item.price ? `$${item.price}` : 'Free'}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-500">12 watching</p>
+                        <p className="text-xs text-gray-500">{new Date(item.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
                     <div className="flex space-x-2">
@@ -293,7 +348,7 @@ const Profile: React.FC = () => {
                       </button>
                       <button className="flex-1 flex items-center justify-center space-x-1 py-2 px-3 bg-[#F5F7FA] text-[#0E1F33] rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
                         <MinusIcon className="h-4 w-4" />
-                        <span>−10%</span>
+                        <span>10%</span>
                       </button>
                       <button className="flex-1 flex items-center justify-center space-x-1 py-2 px-3 bg-[#FF6B35] text-white rounded-lg text-sm font-medium hover:brightness-110 transition-colors">
                         <CheckIcon className="h-4 w-4" />
@@ -402,6 +457,88 @@ const Profile: React.FC = () => {
                    animate={{ opacity: 1 }}
                    transition={{ delay: 0.1, duration: 0.3 }}
                  >
+                   {/* Social Media Settings */}
+                   <div className="border-b border-[#E6E9EE] pb-4 mb-4">
+                     <h4 className="text-sm font-semibold text-[#0E1F33] mb-3">Social Media</h4>
+                     <div className="space-y-3">
+                       <motion.button 
+                         whileHover={{ scale: 1.02 }}
+                         whileTap={{ scale: 0.98 }}
+                         className="w-full text-left py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors"
+                       >
+                         <div className="flex items-center justify-between">
+                           <div className="flex items-center space-x-3">
+                             <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded flex items-center justify-center">
+                               <span className="text-white text-xs font-bold">IG</span>
+                             </div>
+                             <div>
+                               <p className="font-medium text-[#0E1F33]">Instagram</p>
+                               <p className="text-sm text-gray-600">{socialMedia.instagram || 'Not connected'}</p>
+                             </div>
+                           </div>
+                           <span className="text-xs text-[#FF6B35] font-medium">Edit</span>
+                         </div>
+                       </motion.button>
+                       
+                       <motion.button 
+                         whileHover={{ scale: 1.02 }}
+                         whileTap={{ scale: 0.98 }}
+                         className="w-full text-left py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors"
+                       >
+                         <div className="flex items-center justify-between">
+                           <div className="flex items-center space-x-3">
+                             <div className="w-8 h-8 bg-yellow-400 rounded flex items-center justify-center">
+                               <span className="text-white text-xs font-bold">SC</span>
+                             </div>
+                             <div>
+                               <p className="font-medium text-[#0E1F33]">Snapchat</p>
+                               <p className="text-sm text-gray-600">{socialMedia.snapchat || 'Not connected'}</p>
+                             </div>
+                           </div>
+                           <span className="text-xs text-[#FF6B35] font-medium">Edit</span>
+                         </div>
+                       </motion.button>
+                       
+                       <motion.button 
+                         whileHover={{ scale: 1.02 }}
+                         whileTap={{ scale: 0.98 }}
+                         className="w-full text-left py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors"
+                       >
+                         <div className="flex items-center justify-between">
+                           <div className="flex items-center space-x-3">
+                             <div className="w-8 h-8 bg-blue-400 rounded flex items-center justify-center">
+                               <span className="text-white text-xs font-bold">TW</span>
+                             </div>
+                             <div>
+                               <p className="font-medium text-[#0E1F33]">Twitter</p>
+                               <p className="text-sm text-gray-600">{socialMedia.twitter || 'Not connected'}</p>
+                             </div>
+                           </div>
+                           <span className="text-xs text-[#FF6B35] font-medium">Edit</span>
+                         </div>
+                       </motion.button>
+                       
+                       <motion.button 
+                         whileHover={{ scale: 1.02 }}
+                         whileTap={{ scale: 0.98 }}
+                         className="w-full text-left py-3 px-4 hover:bg-gray-50 rounded-lg transition-colors"
+                       >
+                         <div className="flex items-center justify-between">
+                           <div className="flex items-center space-x-3">
+                             <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+                               <span className="text-white text-xs font-bold">LI</span>
+                             </div>
+                             <div>
+                               <p className="font-medium text-[#0E1F33]">LinkedIn</p>
+                               <p className="text-sm text-gray-600">{socialMedia.linkedin || 'Not connected'}</p>
+                             </div>
+                           </div>
+                           <span className="text-xs text-[#FF6B35] font-medium">Edit</span>
+                         </div>
+                       </motion.button>
+                     </div>
+                   </div>
+
                    <motion.button 
                      whileHover={{ scale: 1.02 }}
                      whileTap={{ scale: 0.98 }}

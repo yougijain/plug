@@ -26,14 +26,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const result = await auth.getCurrentUser();
         if (result && 'user' in result && result.user) {
           const user = result.user as any;
-          setCurrentUser({
-            id: user.id,
-            email: user.email || '',
-            name: user.user_metadata?.name || '',
-            university: user.user_metadata?.university || '',
-            avatar: user.user_metadata?.avatar,
-            verified: false
-          });
+          // Gate access until email verified
+          if (user.email_confirmed_at) {
+            setCurrentUser({
+              id: user.id,
+              email: user.email || '',
+              name: user.user_metadata?.name || '',
+              university: user.user_metadata?.university || '',
+              avatar: user.user_metadata?.avatar,
+              verified: true,
+            });
+          } else {
+            setCurrentUser(null);
+          }
         }
       } catch (error) {
         console.error('Auth check failed:', error);
@@ -49,14 +54,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         if (event === 'SIGNED_IN' && session?.user) {
           const user = session.user as any;
-          setCurrentUser({
-            id: user.id,
-            email: user.email || '',
-            name: user.user_metadata?.name || '',
-            university: user.user_metadata?.university || '',
-            avatar: user.user_metadata?.avatar,
-            verified: false,
-          });
+          if (user.email_confirmed_at) {
+            setCurrentUser({
+              id: user.id,
+              email: user.email || '',
+              name: user.user_metadata?.name || '',
+              university: user.user_metadata?.university || '',
+              avatar: user.user_metadata?.avatar,
+              verified: true,
+            });
+          } else {
+            setCurrentUser(null);
+          }
         }
         if (event === 'SIGNED_OUT') {
           setCurrentUser(null);
@@ -104,6 +113,16 @@ export const useAuth = () => {
           
           const errorMessageStr = (error as any)?.message || '';
           
+          // Special case: Supabase rate-limits verification email resends
+          // Message often looks like: "For security reasons/purposes, you can only request this after XX seconds."
+          if (errorMessageStr.toLowerCase().includes('for security') ||
+              errorMessageStr.toLowerCase().includes('request this after')) {
+            console.warn('⚠️ [useAuth.signUpMutation] Verification recently sent (rate limited). Treating as success.')
+            // Treat as success: return the existing data without throwing
+            // so the UI can show a success banner instead of an error.
+            return data as any
+          }
+
           if (errorMessageStr.includes('already registered')) {
             errorMessage = 'An account with this email already exists. Please sign in instead.';
           } else if (errorMessageStr.includes('password')) {
