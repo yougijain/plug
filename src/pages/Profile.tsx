@@ -60,19 +60,24 @@ const Profile: React.FC = () => {
   ];
 
   const handleSignOut = async () => {
+    console.log('🔍 [Profile] Sign out clicked');
     try {
+      console.log('🔍 [Profile] Calling signOut...');
       await signOut();
+      console.log('✅ [Profile] Sign out successful');
+      // Force navigate to login if needed
+      navigate('/');
     } catch (error) {
-      console.error('Sign out failed:', error);
+      console.error('❌ [Profile] Sign out failed:', error);
     }
   };
 
   const handleCreatePost = () => {
-    navigate('/post');
+    navigate('/create-ticket');
   };
 
   const handleFindDeals = () => {
-    navigate('/live');
+    navigate('/');
   };
 
   const getStatusColor = (status: string) => {
@@ -104,15 +109,24 @@ const Profile: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#F5F7FA]">
       {/* Hero Header */}
-      <div className="bg-[#0E1F33] text-white px-4 py-6">
+      <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white px-4 py-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-bold">Profile</h1>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
-          >
-            <Cog6ToothIcon className="h-6 w-6" />
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              aria-label="Settings"
+            >
+              <Cog6ToothIcon className="h-6 w-6" />
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-sm font-medium"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
         
         <div className="flex items-center space-x-4">
@@ -304,15 +318,15 @@ const Profile: React.FC = () => {
                 <div className="space-y-3">
                   <button 
                     onClick={handleFindDeals}
-                    className="w-full h-11 bg-[#FF6B35] text-white rounded-xl font-semibold hover:brightness-110 transition-colors"
+                    className="w-full h-11 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg"
                   >
-                    Find deals
+                    Browse Tickets
                   </button>
                   <button 
                     onClick={handleCreatePost}
-                    className="w-full h-11 border border-[#E6E9EE] text-[#0E1F33] rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+                    className="w-full h-11 border-2 border-indigo-600 text-indigo-600 rounded-xl font-semibold hover:bg-indigo-50 transition-colors"
                   >
-                    Post something
+                    Sell Tickets
                   </button>
                 </div>
               </div>
@@ -363,13 +377,13 @@ const Profile: React.FC = () => {
             ) : (
               <div className="text-center py-12">
                 <SellingEmptyIcon className="h-24 w-24 mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-[#0E1F33] mb-2">No items for sale</h3>
-                <p className="text-gray-600 mb-6">Start selling to earn money and declutter your space</p>
+                <h3 className="text-lg font-bold text-[#0E1F33] mb-2">No tickets listed</h3>
+                <p className="text-gray-600 mb-6">Start selling tickets to events you can't attend</p>
                 <button 
                   onClick={handleCreatePost}
-                  className="w-full h-11 bg-[#FF6B35] text-white rounded-xl font-semibold hover:brightness-110 transition-colors"
+                  className="w-full h-11 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg"
                 >
-                  Post something
+                  Sell Tickets
                 </button>
               </div>
             )}

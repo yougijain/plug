@@ -32,11 +32,18 @@ const CreateTicket: React.FC = () => {
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  const next = () => setStep((s) => (s === 3 ? s : ((s + 1) as any)));
+  const next = () => {
+    console.log('🔍 [CreateTicket] Moving to next step. Current:', step);
+    setStep((s) => (s === 3 ? s : ((s + 1) as any)));
+  };
+  
   const back = () => {
+    console.log('🔍 [CreateTicket] Back clicked. Current step:', step);
     if (step === 1) {
+      // Step 1: Go back to home
       navigate('/');
     } else {
+      // Step 2 or 3: Go to previous step
       setStep((s) => (s === 1 ? s : ((s - 1) as any)));
     }
   };
@@ -166,21 +173,26 @@ const CreateTicket: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-24">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-4 shadow-sm">
-        <div className="grid grid-cols-3 items-center">
-          <div className="justify-self-start">
-            <button 
-              onClick={back} 
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              aria-label="Back"
-            >
-              <ChevronLeftIcon className="h-6 w-6 text-gray-700" />
-            </button>
-          </div>
-          <div className="justify-self-center flex items-center space-x-2">
+        <div className="flex items-center justify-between">
+          <button 
+            onClick={back} 
+            className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors group"
+            aria-label="Back"
+          >
+            <ChevronLeftIcon className="h-5 w-5 text-gray-700 group-hover:text-indigo-600" />
+            <span className="text-sm font-medium text-gray-700 group-hover:text-indigo-600">
+              {step === 1 ? 'Cancel' : 'Back'}
+            </span>
+          </button>
+          <div className="flex items-center space-x-2">
             <TicketIcon className="h-5 w-5 text-indigo-600" />
-            <h1 className="text-lg font-bold text-gray-900">Sell Tickets</h1>
+            <h1 className="text-lg font-bold text-gray-900">
+              {step === 1 && 'Event Details'}
+              {step === 2 && 'Add Photos'}
+              {step === 3 && 'Ticket Info'}
+            </h1>
           </div>
-          <div className="justify-self-end w-10" />
+          <div className="w-20" />
         </div>
       </div>
 
