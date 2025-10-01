@@ -19,6 +19,15 @@ const CreateTicket: React.FC = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // Redirect if user doesn't have campus_id
+  React.useEffect(() => {
+    if (currentUser && !currentUser.campus_id) {
+      console.warn('⚠️ [CreateTicket] User missing campus_id, redirecting to profile');
+      setError('⚠️ Your account is missing campus information. Please update your profile.');
+      navigate('/profile');
+    }
+  }, [currentUser, navigate, setError]);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -134,9 +143,8 @@ const CreateTicket: React.FC = () => {
 
       console.log('🔍 [CreateTicket] Calling createTicket with data:', ticketData);
       
-      await createTicket(ticketData);
-      
-      console.log('✅ [CreateTicket] Ticket created successfully');
+      const result = await createTicket(ticketData);
+      console.log('✅ [CreateTicket] Ticket created successfully:', result);
       
       // Show success message
       setShowSuccess(true);
@@ -148,7 +156,14 @@ const CreateTicket: React.FC = () => {
       
     } catch (error) {
       console.error('❌ [CreateTicket] Failed to create ticket:', error);
-      setError(error instanceof Error ? error.message : 'Failed to create ticket. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create ticket. Please try again.';
+      console.error('❌ [CreateTicket] Error details:', {
+        message: errorMessage,
+        error: error,
+        user: currentUser,
+        form: form
+      });
+      setError(errorMessage);
     }
   };
 
@@ -472,9 +487,9 @@ const CreateTicket: React.FC = () => {
 
               <button 
                 onClick={submit} 
-                disabled={isCreatingTicket || !isFormValid()} 
+                disabled={isCreatingTicket || !isFormValid() || !currentUser?.campus_id} 
                 className={`w-full h-12 rounded-xl font-semibold mt-6 transition-all ${
-                  isCreatingTicket || !isFormValid()
+                  isCreatingTicket || !isFormValid() || !currentUser?.campus_id
                     ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
                     : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-lg'
                 }`}
@@ -484,6 +499,8 @@ const CreateTicket: React.FC = () => {
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                     <span>Posting...</span>
                   </div>
+                ) : !currentUser?.campus_id ? (
+                  'Missing Campus Info'
                 ) : (
                   'Post Ticket'
                 )}
