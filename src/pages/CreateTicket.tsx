@@ -56,6 +56,10 @@ const CreateTicket: React.FC = () => {
   }
 
   const submit = async () => {
+    console.log('🔍 [CreateTicket] Submit clicked');
+    console.log('🔍 [CreateTicket] Current user:', currentUser);
+    console.log('🔍 [CreateTicket] Form data:', form);
+    
     if (!currentUser?.id) {
       setError('You must be logged in to create a ticket');
       return;
@@ -79,10 +83,12 @@ const CreateTicket: React.FC = () => {
       return;
     }
     if (!currentUser.campus_id) {
-      setError('User campus not found. Please update your profile.');
+      console.error('❌ [CreateTicket] User has no campus_id!', currentUser);
+      setError('⚠️ Your account is missing campus information. Please sign out and create a new account with your .edu email.');
       return;
     }
 
+    console.log('✅ [CreateTicket] All validations passed');
     clearError();
     
     try {
@@ -154,6 +160,8 @@ const CreateTicket: React.FC = () => {
     { value: 'other', icon: '🎟️', label: 'Other' }
   ];
 
+  const { error: globalError } = useAppStore();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 pb-24">
       {/* Header */}
@@ -175,6 +183,13 @@ const CreateTicket: React.FC = () => {
           <div className="justify-self-end w-10" />
         </div>
       </div>
+
+      {/* Error Banner */}
+      {globalError && (
+        <div className="bg-red-50 border-b border-red-200 px-4 py-3">
+          <p className="text-red-800 text-sm text-center font-medium">{globalError}</p>
+        </div>
+      )}
 
       {/* Progress Indicator */}
       <div className="bg-white px-4 py-3 border-b border-gray-200">
