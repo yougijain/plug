@@ -96,7 +96,14 @@ export const useAuth = () => {
     mutationFn: async ({ email, password, userData }: {
       email: string
       password: string
-      userData: Omit<User, 'id' | 'verified'>
+      userData: {
+        email: string
+        name: string
+        university: string
+        campus_id: string
+        date_of_birth: string
+        avatar?: string
+      }
     }) => {
       console.log('🔍 [useAuth.signUpMutation] Starting signup...', { email, userData })
       clearError() // Clear any previous errors
@@ -146,8 +153,9 @@ export const useAuth = () => {
             email: userData.email,
             name: userData.name,
             university: userData.university,
-            avatar: userData.avatar,
-            verified: false
+            campus_id: userData.campus_id,
+            date_of_birth: userData.date_of_birth,
+            avatar: userData.avatar
           })
           console.log('✅ [useAuth.signUpMutation] User profile created')
         }

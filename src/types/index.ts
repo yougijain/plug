@@ -1,73 +1,54 @@
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  university: string;
-  avatar?: string;
-  verified: boolean;
-  created_at?: string;
-  updated_at?: string;
+// Campus Connect - Tickets MVP Types
+import type { Database } from './database'
+
+export type Tables = Database['public']['Tables']
+
+// Core types
+export type Campus = Tables['campuses']['Row']
+export type User = Tables['users']['Row']
+export type Event = Tables['events']['Row']
+export type Ticket = Tables['tickets']['Row']
+export type Report = Tables['reports']['Row']
+export type Reputation = Tables['reputation']['Row']
+export type SavedTicket = Tables['saved_tickets']['Row']
+
+// Insert types
+export type CampusInsert = Tables['campuses']['Insert']
+export type UserInsert = Tables['users']['Insert']
+export type EventInsert = Tables['events']['Insert']
+export type TicketInsert = Tables['tickets']['Insert']
+export type ReportInsert = Tables['reports']['Insert']
+export type ReputationInsert = Tables['reputation']['Insert']
+export type SavedTicketInsert = Tables['saved_tickets']['Insert']
+
+// Update types
+export type CampusUpdate = Tables['campuses']['Update']
+export type UserUpdate = Tables['users']['Update']
+export type EventUpdate = Tables['events']['Update']
+export type TicketUpdate = Tables['tickets']['Update']
+export type ReportUpdate = Tables['reports']['Update']
+
+// Status types
+export type TicketStatus = 'active' | 'sold' | 'expired' | 'removed'
+export type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed'
+
+// Enum types
+export type EventCategory = 'sports' | 'concert' | 'party' | 'theater' | 'other'
+
+// Helper types
+export interface SellerContact {
+  name: string
+  snapchat?: string
+  instagram?: string
+  phone?: string
+  reputation: number
+  totalSales: number
 }
 
-export interface Post {
-  id: string;
-  user_id: string;
-  type: 'item' | 'service' | 'ride' | 'ticket' | 'book' | 'sublet';
-  title: string;
-  description: string;
-  price?: number;
-  category: string;
-  location: string;
-  images?: string[];
-  created_at: string;
-  expires_at?: string;
-  status: 'active' | 'sold' | 'expired';
-  tags: string[];
-  is_flash_deal?: boolean;
-  flash_deal_expires_at?: string;
-  // Joined user data
-  users?: {
-    name: string;
-    avatar?: string;
-    university: string;
-  };
+export interface TicketWithDetails extends Ticket {
+  seller?: SellerContact
+  campus?: {
+    name: string
+    domain: string
+  }
 }
-
-export interface Message {
-  id: string;
-  sender_id: string;
-  receiver_id: string;
-  conversation_id: string;
-  post_id?: string;
-  content: string;
-  created_at: string;
-  read: boolean;
-}
-
-export interface Conversation {
-  id: string;
-  participants: string[];
-  last_message_id?: string;
-  unread_count: number;
-  created_at: string;
-  updated_at: string;
-  // Listing information for the conversation
-  listing_title?: string;
-  listing_price?: number;
-  listing_image?: string | null;
-}
-
-export interface Ride {
-  id: string;
-  driver_id: string;
-  origin: string;
-  destination: string;
-  departure_time: string;
-  available_seats: number;
-  price: number;
-  description?: string;
-  status: 'active' | 'full' | 'completed';
-  created_at: string;
-}
-
-export type TabType = 'home' | 'live' | 'profile' | 'messages' | 'post';

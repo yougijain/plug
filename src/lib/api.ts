@@ -1,22 +1,70 @@
+// Campus Connect API
 import { supabase } from './supabase'
 import type { Database } from '../types/database'
+import type { Campus, User, Ticket, Event, Report, TicketInsert, ReportInsert, EventInsert } from '../types'
 
 type Tables = Database['public']['Tables']
-type User = Tables['users']['Row']
-type Post = Tables['posts']['Row']
-type Message = Tables['messages']['Row']
-type Ride = Tables['rides']['Row']
-type Conversation = Tables['conversations']['Row']
 
-// Final app mode: No demo data or fallbacks
+// =============================================================================
+// CAMPUSES API
+// =============================================================================
+export const campusesApi = {
+  getAll: async (): Promise<Campus[]> => {
+    console.log('🔍 [campusesApi.getAll] Fetching all campuses...')
+    
+    try {
+      const { data, error } = await supabase
+        .from('campuses')
+        .select('*')
+        .eq('is_active', true)
+        .order('name')
+      
+      if (error) {
+        console.error('❌ [campusesApi.getAll] Error:', error)
+        throw error
+      }
+      
+      console.log('✅ [campusesApi.getAll] Success:', data?.length || 0, 'campuses')
+      return data || []
+    } catch (err) {
+      console.error('❌ [campusesApi.getAll] Exception:', err)
+      throw err
+    }
+  },
 
-// User API
+  getByDomain: async (domain: string): Promise<Campus | null> => {
+    console.log('🔍 [campusesApi.getByDomain] Fetching campus:', domain)
+    
+    try {
+      const { data, error } = await supabase
+        .from('campuses')
+        .select('*')
+        .eq('domain', domain.toLowerCase())
+        .eq('is_active', true)
+        .maybeSingle()
+      
+      if (error) {
+        console.error('❌ [campusesApi.getByDomain] Error:', error)
+        throw error
+      }
+      
+      console.log('✅ [campusesApi.getByDomain] Success:', data ? 'found' : 'not found')
+      return data
+    } catch (err) {
+      console.error('❌ [campusesApi.getByDomain] Exception:', err)
+      throw err
+    }
+  }
+}
+
+// =============================================================================
+// USERS API
+// =============================================================================
 export const userApi = {
   getCurrentUser: async (): Promise<User | null> => {
     console.log('🔍 [userApi.getCurrentUser] Starting...')
     
     try {
-      console.log('🔍 [userApi.getCurrentUser] Getting auth user...')
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       
       if (authError) {
@@ -29,9 +77,6 @@ export const userApi = {
         return null
       }
       
-      console.log('🔍 [userApi.getCurrentUser] Auth user found:', user.id)
-      console.log('🔍 [userApi.getCurrentUser] Querying users table...')
-      
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -43,7 +88,7 @@ export const userApi = {
         throw error
       }
       
-      console.log('✅ [userApi.getCurrentUser] Success:', data)
+      console.log('✅ [userApi.getCurrentUser] Success')
       return data
     } catch (err) {
       console.error('❌ [userApi.getCurrentUser] Exception:', err)
@@ -51,11 +96,59 @@ export const userApi = {
     }
   },
 
-  updateProfile: async (userId: string, updates: Partial<User>) => {
-    console.log('🔍 [userApi.updateProfile] Starting...', { userId, updates })
+  createUser: async (params: {
+    id: string
+    email: string
+    name: string
+    university: string
+    campus_id: string
+    date_of_birth: string
+    avatar?: string
+  }): Promise<User> => {
+    console.log('🔍 [userApi.createUser] Creating user...', params.email)
     
     try {
-      console.log('🔍 [userApi.updateProfile] Updating user in database...')
+      // Validate .edu email
+      const domain = params.email.split('@')[1]?.toLowerCase()
+      const isEduEmail = domain?.endsWith('.edu') || false
+      
+      const { data, error } = await supabase
+        .from('users')
+        .upsert({
+          id: params.id,
+          email: params.email,
+          name: params.name,
+          university: params.university,
+          campus_id: params.campus_id,
+          avatar: params.avatar,
+          date_of_birth: params.date_of_birth,
+          is_edu_email: isEduEmail,
+          email_verified: false,
+          verified: false,
+          reputation_score: 0,
+          successful_sales: 0,
+          is_banned: false
+        }, { onConflict: 'id' })
+        .select()
+        .single()
+      
+      if (error) {
+        console.error('❌ [userApi.createUser] Error:', error)
+        throw error
+      }
+      
+      console.log('✅ [userApi.createUser] Success')
+      return data
+    } catch (err) {
+      console.error('❌ [userApi.createUser] Exception:', err)
+      throw err
+    }
+  },
+
+  updateProfile: async (userId: string, updates: Partial<User>): Promise<User> => {
+    console.log('🔍 [userApi.updateProfile] Updating user:', userId)
+    
+    try {
       const { data, error } = await supabase
         .from('users')
         .update(updates)
@@ -64,11 +157,11 @@ export const userApi = {
         .single()
       
       if (error) {
-        console.error('❌ [userApi.updateProfile] Database error:', error)
+        console.error('❌ [userApi.updateProfile] Error:', error)
         throw error
       }
       
-      console.log('✅ [userApi.updateProfile] Success:', data)
+      console.log('✅ [userApi.updateProfile] Success')
       return data
     } catch (err) {
       console.error('❌ [userApi.updateProfile] Exception:', err)
@@ -76,688 +169,492 @@ export const userApi = {
     }
   },
 
-  createUser: async (
-    params: { id: string } & Omit<User, 'id' | 'created_at' | 'updated_at'>
-  ) => {
-    console.log('🔍 [userApi.createUser] Starting...', params)
+  deleteAccount: async (userId: string): Promise<void> => {
+    console.log('🔍 [userApi.deleteAccount] Deleting user:', userId)
     
     try {
-      console.log('🔍 [userApi.createUser] Inserting user into database...')
-      const { data, error } = await supabase
-        .from('users')
-        .upsert({
-          id: params.id,
-          email: params.email,
-          name: params.name,
-          university: params.university,
-          avatar: params.avatar,
-          verified: params.verified ?? false,
-        }, { onConflict: 'id' })
-        .select()
-        .single()
+      // First, delete all user's tickets
+      await supabase.from('tickets').delete().eq('seller_id', userId)
+      
+      // Delete saved tickets
+      await supabase.from('saved_tickets').delete().eq('user_id', userId)
+      
+      // Delete reports
+      await supabase.from('reports').delete().eq('reporter_id', userId)
+      
+      // Delete reputation records
+      await supabase.from('reputation').delete().eq('user_id', userId)
+      
+      // Finally, delete user
+      const { error } = await supabase.from('users').delete().eq('id', userId)
       
       if (error) {
-        console.error('❌ [userApi.createUser] Database error:', error)
+        console.error('❌ [userApi.deleteAccount] Error:', error)
         throw error
       }
       
-      console.log('✅ [userApi.createUser] Success:', data)
+      // Delete auth user
+      await supabase.auth.admin.deleteUser(userId)
+      
+      console.log('✅ [userApi.deleteAccount] Success')
+    } catch (err) {
+      console.error('❌ [userApi.deleteAccount] Exception:', err)
+      throw err
+    }
+  },
+
+  getById: async (userId: string): Promise<User | null> => {
+    console.log('🔍 [userApi.getById] Fetching user:', userId)
+    
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single()
+      
+      if (error) {
+        console.error('❌ [userApi.getById] Error:', error)
+        throw error
+      }
+      
+      console.log('✅ [userApi.getById] Success')
       return data
     } catch (err) {
-      console.error('❌ [userApi.createUser] Exception:', err)
+      console.error('❌ [userApi.getById] Exception:', err)
       throw err
     }
   }
 }
 
-// Posts API
-export const postsApi = {
-  getAll: async (filters?: {
-    type?: string
-    category?: string
-    status?: string
-    userId?: string
-    isFlash?: boolean
-  }): Promise<Post[]> => {
-    console.log('🔍 [postsApi.getAll] Starting...', filters)
+// =============================================================================
+// EVENTS API
+// =============================================================================
+export const eventsApi = {
+  create: async (eventData: Omit<EventInsert, 'id' | 'created_at' | 'updated_at'>): Promise<Event> => {
+    console.log('🔍 [eventsApi.create] Creating event...', eventData.name)
     
     try {
-      console.log('🔍 [postsApi.getAll] Building query...')
-      let query = supabase
-        .from('posts')
-        .select(`
-          *,
-          users (
-            name,
-            avatar,
-            university
-          )
-        `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-      
-      if (filters?.type) {
-        query = query.eq('type', filters.type)
-      }
-      if (filters?.category) {
-        query = query.eq('category', filters.category)
-      }
-      if (filters?.userId) {
-        query = query.eq('user_id', filters.userId)
-      }
-      if (typeof filters?.isFlash === 'boolean') {
-        query = query.eq('is_flash_deal', filters.isFlash)
-      }
-      
-      console.log('🔍 [postsApi.getAll] Executing query...')
-      const { data, error } = await query
+      const { data, error } = await supabase
+        .from('events')
+        .insert(eventData)
+        .select()
+        .single()
       
       if (error) {
-        console.error('❌ [postsApi.getAll] Database error:', error)
+        console.error('❌ [eventsApi.create] Error:', error)
         throw error
       }
       
-      console.log('✅ [postsApi.getAll] Success:', data?.length || 0, 'posts')
-      return (data || []) as Post[]
+      console.log('✅ [eventsApi.create] Success')
+      return data
     } catch (err) {
-      console.error('❌ [postsApi.getAll] Exception:', err)
+      console.error('❌ [eventsApi.create] Exception:', err)
       throw err
     }
   },
 
-  getById: async (id: string): Promise<Post | null> => {
-    console.log('🔍 [postsApi.getById] Starting...', id)
+  getByCampus: async (campusId: string): Promise<Event[]> => {
+    console.log('🔍 [eventsApi.getByCampus] Fetching events for campus:', campusId)
     
     try {
-      console.log('🔍 [postsApi.getById] Querying post...')
       const { data, error } = await supabase
-        .from('posts')
+        .from('events')
+        .select('*')
+        .eq('campus_id', campusId)
+        .gte('event_date', new Date().toISOString())
+        .order('event_date')
+      
+      if (error) {
+        console.error('❌ [eventsApi.getByCampus] Error:', error)
+        throw error
+      }
+      
+      console.log('✅ [eventsApi.getByCampus] Success:', data?.length || 0, 'events')
+      return data || []
+    } catch (err) {
+      console.error('❌ [eventsApi.getByCampus] Exception:', err)
+      throw err
+    }
+  }
+}
+
+// =============================================================================
+// TICKETS API
+// =============================================================================
+export const ticketsApi = {
+  getAll: async (filters?: {
+    campusId?: string
+    sellerId?: string
+    status?: string
+    search?: string
+  }): Promise<Ticket[]> => {
+    console.log('🔍 [ticketsApi.getAll] Fetching tickets...', filters)
+    
+    try {
+      let query = supabase
+        .from('tickets')
         .select(`
           *,
-          users (
+          users!tickets_seller_id_fkey (
             name,
             avatar,
-            university
+            university,
+            reputation_score,
+            successful_sales,
+            snapchat_handle,
+            instagram_handle,
+            phone_number
+          ),
+          campuses (
+            name,
+            domain
+          )
+        `)
+        .order('created_at', { ascending: false })
+      
+      if (filters?.campusId) {
+        query = query.eq('campus_id', filters.campusId)
+      }
+      if (filters?.sellerId) {
+        query = query.eq('seller_id', filters.sellerId)
+      }
+      if (filters?.status) {
+        query = query.eq('status', filters.status)
+      } else {
+        query = query.eq('status', 'active')
+      }
+      if (filters?.search) {
+        query = query.or(`title.ilike.%${filters.search}%,event_name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
+      }
+      
+      const { data, error } = await query
+      
+      if (error) {
+        console.error('❌ [ticketsApi.getAll] Error:', error)
+        throw error
+      }
+      
+      console.log('✅ [ticketsApi.getAll] Success:', data?.length || 0, 'tickets')
+      return (data || []) as Ticket[]
+    } catch (err) {
+      console.error('❌ [ticketsApi.getAll] Exception:', err)
+      throw err
+    }
+  },
+
+  getById: async (id: string): Promise<Ticket | null> => {
+    console.log('🔍 [ticketsApi.getById] Fetching ticket:', id)
+    
+    try {
+      const { data, error } = await supabase
+        .from('tickets')
+        .select(`
+          *,
+          users!tickets_seller_id_fkey (
+            name,
+            avatar,
+            university,
+            reputation_score,
+            successful_sales,
+            snapchat_handle,
+            instagram_handle,
+            phone_number
+          ),
+          campuses (
+            name,
+            domain
           )
         `)
         .eq('id', id)
         .single()
       
       if (error) {
-        console.error('❌ [postsApi.getById] Database error:', error)
+        console.error('❌ [ticketsApi.getById] Error:', error)
         throw error
       }
       
-      console.log('✅ [postsApi.getById] Success:', data)
-      return data as Post
+      // Increment view count
+      await supabase
+        .from('tickets')
+        .update({ views: (data.views || 0) + 1 })
+        .eq('id', id)
+      
+      console.log('✅ [ticketsApi.getById] Success')
+      return data as Ticket
     } catch (err) {
-      console.error('❌ [postsApi.getById] Exception:', err)
+      console.error('❌ [ticketsApi.getById] Exception:', err)
       throw err
     }
   },
 
-  create: async (postData: Omit<Post, 'id' | 'created_at'>): Promise<Post> => {
-    console.log('🔍 [postsApi.create] Starting...', postData)
+  create: async (ticketData: Omit<TicketInsert, 'id' | 'created_at' | 'updated_at'>): Promise<Ticket> => {
+    console.log('🔍 [ticketsApi.create] Creating ticket...', ticketData.title)
     
     try {
-      // Ensure the posting user exists in public.users to satisfy RLS
-      console.log('🔍 [postsApi.create] Ensuring user row exists for', postData.user_id)
-      const { data: existingUser, error: userSelectError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', postData.user_id)
-        .maybeSingle()
-
-      if (userSelectError) {
-        console.warn('⚠️ [postsApi.create] user lookup error (continuing to upsert):', userSelectError)
-      }
-
-      if (!existingUser) {
-        console.log('🔍 [postsApi.create] No user row found; attempting upsert from auth metadata')
-        const { data: authData } = await supabase.auth.getUser()
-        const authUser = authData?.user as any
-        const fallbackEmail = authUser?.email || 'user@example.com'
-        const fallbackName = authUser?.user_metadata?.name || (fallbackEmail.split('@')[0] || 'User')
-        const fallbackUniversity = authUser?.user_metadata?.university || ''
-        const fallbackAvatar = authUser?.user_metadata?.avatar
-
-        const { error: upsertErr } = await supabase
-          .from('users')
-          .upsert({
-            id: postData.user_id,
-            email: fallbackEmail,
-            name: fallbackName,
-            university: fallbackUniversity,
-            avatar: fallbackAvatar,
-            verified: false
-          }, { onConflict: 'id' })
-        if (upsertErr) {
-          console.error('❌ [postsApi.create] Failed to upsert user before posting:', upsertErr)
-          throw upsertErr
-        }
-        console.log('✅ [postsApi.create] User row ensured')
-      }
-
-      console.log('🔍 [postsApi.create] Creating post...')
       const { data, error } = await supabase
-        .from('posts')
+        .from('tickets')
         .insert({
-          user_id: postData.user_id,
-          type: postData.type,
-          title: postData.title,
-          description: postData.description,
-          price: postData.price,
-          category: postData.category,
-          location: postData.location,
-          images: postData.images,
-          expires_at: postData.expires_at,
+          ...ticketData,
           status: 'active',
-          tags: postData.tags || [],
-          is_flash_deal: postData.is_flash_deal || false,
-          flash_deal_expires_at: postData.flash_deal_expires_at
+          views: 0,
+          quantity_sold: 0
         })
         .select()
         .single()
       
       if (error) {
-        console.error('❌ [postsApi.create] Database error:', error)
+        console.error('❌ [ticketsApi.create] Error:', error)
         throw error
       }
       
-      console.log('✅ [postsApi.create] Success:', data)
+      console.log('✅ [ticketsApi.create] Success')
       return data
     } catch (err) {
-      console.error('❌ [postsApi.create] Exception:', err)
+      console.error('❌ [ticketsApi.create] Exception:', err)
       throw err
     }
   },
 
-  update: async (id: string, updates: Partial<Post>): Promise<Post> => {
-    console.log('🔍 [postsApi.update] Starting...', { id, updates })
+  update: async (id: string, updates: Partial<Ticket>): Promise<Ticket> => {
+    console.log('🔍 [ticketsApi.update] Updating ticket:', id)
     
     try {
-      console.log('🔍 [postsApi.update] Updating post...')
       const { data, error } = await supabase
-        .from('posts')
+        .from('tickets')
         .update(updates)
         .eq('id', id)
         .select()
         .single()
       
       if (error) {
-        console.error('❌ [postsApi.update] Database error:', error)
+        console.error('❌ [ticketsApi.update] Error:', error)
         throw error
       }
       
-      console.log('✅ [postsApi.update] Success:', data)
+      console.log('✅ [ticketsApi.update] Success')
       return data
     } catch (err) {
-      console.error('❌ [postsApi.update] Exception:', err)
+      console.error('❌ [ticketsApi.update] Exception:', err)
+      throw err
+    }
+  },
+
+  markSold: async (ticketId: string, quantity?: number): Promise<void> => {
+    console.log('🔍 [ticketsApi.markSold] Marking ticket sold:', ticketId)
+    
+    try {
+      const { error } = await supabase.rpc('mark_ticket_sold', {
+        ticket_id: ticketId,
+        quantity_to_mark: quantity
+      })
+      
+      if (error) {
+        console.error('❌ [ticketsApi.markSold] Error:', error)
+        throw error
+      }
+      
+      console.log('✅ [ticketsApi.markSold] Success')
+    } catch (err) {
+      console.error('❌ [ticketsApi.markSold] Exception:', err)
       throw err
     }
   },
 
   delete: async (id: string): Promise<void> => {
-    console.log('🔍 [postsApi.delete] Starting...', id)
+    console.log('🔍 [ticketsApi.delete] Deleting ticket:', id)
     
     try {
-      console.log('🔍 [postsApi.delete] Deleting post...')
       const { error } = await supabase
-        .from('posts')
+        .from('tickets')
         .delete()
         .eq('id', id)
       
       if (error) {
-        console.error('❌ [postsApi.delete] Database error:', error)
+        console.error('❌ [ticketsApi.delete] Error:', error)
         throw error
       }
       
-      console.log('✅ [postsApi.delete] Success')
+      console.log('✅ [ticketsApi.delete] Success')
     } catch (err) {
-      console.error('❌ [postsApi.delete] Exception:', err)
+      console.error('❌ [ticketsApi.delete] Exception:', err)
       throw err
     }
   }
 }
 
-// Messages API
-export const messagesApi = {
-  getConversations: async (userId: string): Promise<Conversation[]> => {
-    console.log('🔍 [messagesApi.getConversations] Starting...', userId)
+// =============================================================================
+// REPORTS API
+// =============================================================================
+export const reportsApi = {
+  create: async (reportData: Omit<ReportInsert, 'id' | 'created_at'>): Promise<Report> => {
+    console.log('🔍 [reportsApi.create] Creating report...', reportData.reason)
     
     try {
-      console.log('🔍 [messagesApi.getConversations] Querying conversations...')
       const { data, error } = await supabase
-        .from('conversations')
-        .select('*')
-        .contains('participants', [userId])
-        .order('updated_at', { ascending: false })
-      
-      if (error) {
-        console.error('❌ [messagesApi.getConversations] Database error:', error)
-        throw error
-      }
-      
-      console.log('✅ [messagesApi.getConversations] Success:', data?.length || 0, 'conversations')
-      
-      // If no real conversations exist, return mock ones for testing
-      if (!data || data.length === 0) {
-        console.log('🔍 [messagesApi.getConversations] No real conversations found, returning mock ones')
-        return [
-          {
-            id: 'conv1',
-            participants: [userId, 'user2'],
-            last_message_id: 'msg1',
-            unread_count: 2,
-            created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-            updated_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          },
-          {
-            id: 'conv2',
-            participants: [userId, 'user3'],
-            last_message_id: 'msg3',
-            unread_count: 0,
-            created_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-            updated_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-          }
-        ]
-      }
-      
-      return data || []
-    } catch (err) {
-      console.error('❌ [messagesApi.getConversations] Exception:', err)
-      throw err
-    }
-  },
-
-  getMessages: async (conversationId: string): Promise<Message[]> => {
-    console.log('🔍 [messagesApi.getMessages] Starting...', conversationId)
-    
-    try {
-      console.log('🔍 [messagesApi.getMessages] Querying messages...')
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true })
-      
-      if (error) {
-        console.error('❌ [messagesApi.getMessages] Database error:', error)
-        throw error
-      }
-      
-      console.log('✅ [messagesApi.getMessages] Success:', data?.length || 0, 'messages')
-      
-      // If no real messages exist, return mock ones for testing
-      if (!data || data.length === 0) {
-        console.log('🔍 [messagesApi.getMessages] No real messages found, returning mock ones')
-        
-        // Get the conversation to find the current user ID
-        const { data: conversationData, error: convError } = await supabase
-          .from('conversations')
-          .select('participants')
-          .eq('id', conversationId)
-          .single()
-        
-        if (convError) {
-          console.error('❌ [messagesApi.getMessages] Failed to get conversation:', convError)
-          return []
-        }
-        
-        // Get the current user ID from auth
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
-        if (authError || !user) {
-          console.error('❌ [messagesApi.getMessages] Failed to get current user:', authError)
-          return []
-        }
-        
-        const currentUserId = user.id
-        const otherUserId = conversationData.participants.find((id: string) => id !== currentUserId) || 'user2'
-        
-        console.log('🔍 [messagesApi.getMessages] Using user IDs:', { currentUserId, otherUserId })
-        
-        return [
-          {
-            id: 'msg1',
-            sender_id: otherUserId,
-            receiver_id: currentUserId,
-            conversation_id: conversationId,
-            content: 'Hey! I saw your post about the iPhone. Is it still available?',
-            created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-            read: false,
-          },
-          {
-            id: 'msg2',
-            sender_id: currentUserId,
-            receiver_id: otherUserId,
-            conversation_id: conversationId,
-            content: 'Yes, it is! Are you interested?',
-            created_at: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-            read: true,
-          },
-          {
-            id: 'msg3',
-            sender_id: otherUserId,
-            receiver_id: currentUserId,
-            conversation_id: conversationId,
-            content: 'Great! Can we meet on campus tomorrow?',
-            created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-            read: false,
-          }
-        ]
-      }
-      
-      return data || []
-    } catch (err) {
-      console.error('❌ [messagesApi.getMessages] Exception:', err)
-      throw err
-    }
-  },
-
-  sendMessage: async (messageData: Omit<Message, 'id' | 'created_at'>): Promise<Message> => {
-    console.log('🔍 [messagesApi.sendMessage] Starting...', messageData)
-    
-    try {
-      console.log('🔍 [messagesApi.sendMessage] Sending message...')
-      const { data, error } = await supabase
-        .from('messages')
+        .from('reports')
         .insert({
-          sender_id: messageData.sender_id,
-          receiver_id: messageData.receiver_id,
-          conversation_id: messageData.conversation_id,
-          content: messageData.content,
-          read: messageData.read || false,
+          ...reportData,
+          status: 'pending'
         })
         .select()
         .single()
       
       if (error) {
-        console.error('❌ [messagesApi.sendMessage] Database error:', error)
+        console.error('❌ [reportsApi.create] Error:', error)
         throw error
       }
       
-      console.log('✅ [messagesApi.sendMessage] Success:', data)
+      console.log('✅ [reportsApi.create] Success')
       return data
     } catch (err) {
-      console.error('❌ [messagesApi.sendMessage] Exception:', err)
+      console.error('❌ [reportsApi.create] Exception:', err)
       throw err
     }
   },
 
-  markAsRead: async (messageId: string) => {
-    console.log('🔍 [messagesApi.markAsRead] Starting...', { messageId })
+  getAll: async (status?: string): Promise<Report[]> => {
+    console.log('🔍 [reportsApi.getAll] Fetching reports...')
     
     try {
-      console.log('🔍 [messagesApi.markAsRead] Updating message...')
-      const { error } = await supabase
-        .from('messages')
-        .update({ read: true })
-        .eq('id', messageId)
-      
-      if (error) {
-        console.error('❌ [messagesApi.markAsRead] Database error:', error)
-        throw error
-      }
-      
-      console.log('✅ [messagesApi.markAsRead] Success')
-    } catch (err) {
-      console.error('❌ [messagesApi.markAsRead] Exception:', err)
-      throw err
-    }
-  },
-
-  getOrCreateConversation: async (participants: string[]): Promise<Conversation> => {
-    console.log('🔍 [messagesApi.getOrCreateConversation] Starting...', participants)
-    
-    try {
-      console.log('🔍 [messagesApi.getOrCreateConversation] Looking for existing conversation...')
-      const { data: existing, error: searchError } = await supabase
-        .from('conversations')
+      let query = supabase
+        .from('reports')
         .select('*')
-        .contains('participants', participants)
-        .single()
+        .order('created_at', { ascending: false })
       
-      if (existing && !searchError) {
-        console.log('✅ [messagesApi.getOrCreateConversation] Found existing conversation:', existing)
-        return existing
+      if (status) {
+        query = query.eq('status', status)
       }
       
-      console.log('🔍 [messagesApi.getOrCreateConversation] Creating new conversation...')
-      const { data: newConv, error: createError } = await supabase
-        .from('conversations')
-        .insert({
-          participants,
-          unread_count: 0,
-        })
-        .select()
-        .single()
-      
-      if (createError) {
-        console.error('❌ [messagesApi.getOrCreateConversation] Create error:', createError)
-        throw createError
-      }
-      
-      console.log('✅ [messagesApi.getOrCreateConversation] Created new conversation:', newConv)
-      return newConv
-    } catch (err) {
-      console.error('❌ [messagesApi.getOrCreateConversation] Exception:', err)
-      throw err
-    }
-  }
-}
-
-// Rides API
-export const ridesApi = {
-  getAll: async (filters?: {
-    status?: string
-    driverId?: string
-  }) => {
-    console.log('🔍 [ridesApi.getAll] Starting...', { filters })
-    
-    try {
-      console.log('🔍 [ridesApi.getAll] Building query...')
-      let query = supabase.from('rides').select('*')
-      
-      if (filters?.status) {
-        console.log('🔍 [ridesApi.getAll] Adding status filter:', filters.status)
-        query = query.eq('status', filters.status)
-      }
-      if (filters?.driverId) {
-        console.log('🔍 [ridesApi.getAll] Adding driverId filter:', filters.driverId)
-        query = query.eq('driver_id', filters.driverId)
-      }
-      
-      console.log('🔍 [ridesApi.getAll] Executing query...')
-      const { data, error } = await query.order('departure_time', { ascending: true })
+      const { data, error } = await query
       
       if (error) {
-        console.error('❌ [ridesApi.getAll] Database error:', error)
+        console.error('❌ [reportsApi.getAll] Error:', error)
         throw error
       }
       
-      console.log('✅ [ridesApi.getAll] Success:', data?.length || 0, 'rides')
-      return data
+      console.log('✅ [reportsApi.getAll] Success:', data?.length || 0, 'reports')
+      return data || []
     } catch (err) {
-      console.error('❌ [ridesApi.getAll] Exception:', err)
+      console.error('❌ [reportsApi.getAll] Exception:', err)
       throw err
     }
   },
 
-  create: async (rideData: Omit<Ride, 'id' | 'created_at'>) => {
-    console.log('🔍 [ridesApi.create] Starting...', rideData)
+  update: async (id: string, updates: Partial<Report>): Promise<Report> => {
+    console.log('🔍 [reportsApi.update] Updating report:', id)
     
     try {
-      console.log('🔍 [ridesApi.create] Inserting into database...')
       const { data, error } = await supabase
-        .from('rides')
-        .insert(rideData)
-        .select()
-        .single()
-      
-      if (error) {
-        console.error('❌ [ridesApi.create] Database error:', error)
-        throw error
-      }
-      
-      console.log('✅ [ridesApi.create] Success:', data)
-      return data
-    } catch (err) {
-      console.error('❌ [ridesApi.create] Exception:', err)
-      throw err
-    }
-  },
-
-  update: async (id: string, updates: Partial<Ride>) => {
-    console.log('🔍 [ridesApi.update] Starting...', { id, updates })
-    
-    try {
-      console.log('🔍 [ridesApi.update] Updating in database...')
-      const { data, error } = await supabase
-        .from('rides')
+        .from('reports')
         .update(updates)
         .eq('id', id)
         .select()
         .single()
       
       if (error) {
-        console.error('❌ [ridesApi.update] Database error:', error)
+        console.error('❌ [reportsApi.update] Error:', error)
         throw error
       }
       
-      console.log('✅ [ridesApi.update] Success:', data)
+      console.log('✅ [reportsApi.update] Success')
       return data
     } catch (err) {
-      console.error('❌ [ridesApi.update] Exception:', err)
+      console.error('❌ [reportsApi.update] Exception:', err)
       throw err
     }
   }
-} 
+}
 
-// Test function to check Supabase connection
-export const testSupabaseConnection = async () => {
-  console.log('🔍 [testSupabaseConnection] Starting connection test...')
-  
-  try {
-    console.log('🔍 [testSupabaseConnection] Testing basic query...')
-    const { error } = await supabase
-      .from('users')
-      .select('id')
-      .limit(1)
+// =============================================================================
+// SAVED TICKETS API
+// =============================================================================
+export const savedTicketsApi = {
+  getSaved: async (userId: string): Promise<Ticket[]> => {
+    console.log('🔍 [savedTicketsApi.getSaved] Fetching saved tickets for user:', userId)
     
-    if (error) {
-      console.error('❌ [testSupabaseConnection] Connection failed:', error)
-      return false
+    try {
+      const { data, error } = await supabase
+        .from('saved_tickets')
+        .select(`
+          ticket_id,
+          tickets (
+            *,
+            users!tickets_seller_id_fkey (
+              name,
+              avatar,
+              university,
+              reputation_score,
+              successful_sales
+            )
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+      
+      if (error) {
+        console.error('❌ [savedTicketsApi.getSaved] Error:', error)
+        throw error
+      }
+      
+      // Extract tickets from the join
+      const tickets = data?.map((item: any) => item.tickets).filter(Boolean) || []
+      
+      console.log('✅ [savedTicketsApi.getSaved] Success:', tickets.length, 'tickets')
+      return tickets as Ticket[]
+    } catch (err) {
+      console.error('❌ [savedTicketsApi.getSaved] Exception:', err)
+      throw err
     }
+  },
+
+  save: async (userId: string, ticketId: string): Promise<void> => {
+    console.log('🔍 [savedTicketsApi.save] Saving ticket...', ticketId)
     
-    console.log('✅ [testSupabaseConnection] Connection successful!')
-    return true
-  } catch (err) {
-    console.error('❌ [testSupabaseConnection] Connection error:', err)
-    return false
+    try {
+      const { error } = await supabase
+        .from('saved_tickets')
+        .insert({
+          user_id: userId,
+          ticket_id: ticketId
+        })
+      
+      if (error) {
+        console.error('❌ [savedTicketsApi.save] Error:', error)
+        throw error
+      }
+      
+      console.log('✅ [savedTicketsApi.save] Success')
+    } catch (err) {
+      console.error('❌ [savedTicketsApi.save] Exception:', err)
+      throw err
+    }
+  },
+
+  unsave: async (userId: string, ticketId: string): Promise<void> => {
+    console.log('🔍 [savedTicketsApi.unsave] Unsaving ticket...', ticketId)
+    
+    try {
+      const { error } = await supabase
+        .from('saved_tickets')
+        .delete()
+        .eq('user_id', userId)
+        .eq('ticket_id', ticketId)
+      
+      if (error) {
+        console.error('❌ [savedTicketsApi.unsave] Error:', error)
+        throw error
+      }
+      
+      console.log('✅ [savedTicketsApi.unsave] Success')
+    } catch (err) {
+      console.error('❌ [savedTicketsApi.unsave] Exception:', err)
+      throw err
+    }
   }
 }
 
-// Comprehensive database inspection function
-export const inspectDatabase = async () => {
-  console.log('🔍 [inspectDatabase] Starting comprehensive database inspection...')
-  
-  try {
-    // Check if tables exist and get their structure
-    const tables = ['users', 'posts', 'conversations', 'messages', 'rides']
-    
-    for (const tableName of tables) {
-      try {
-        console.log(`🔍 [inspectDatabase] Checking table: ${tableName}`)
-        
-        // Try to select from the table
-        const { data, error } = await supabase
-          .from(tableName)
-          .select('*')
-          .limit(1)
-        
-        if (error) {
-          console.error(`❌ [inspectDatabase] Table ${tableName} error:`, error)
-        } else {
-          console.log(`✅ [inspectDatabase] Table ${tableName} exists and accessible`)
-          
-          // If we got data, show the structure
-          if (data && data.length > 0) {
-            console.log(`📊 [inspectDatabase] Sample row structure:`, Object.keys(data[0]))
-          }
-        }
-      } catch (err) {
-        console.error(`❌ [inspectDatabase] Failed to check table ${tableName}:`, err)
-      }
-    }
-    
-    // Test specific schema requirements
-    console.log('🔍 [inspectDatabase] Testing specific schema requirements...')
-    
-    // Test conversations.participants as TEXT[]
-    try {
-      console.log('🔍 [inspectDatabase] Testing conversations.participants...')
-      const { data, error } = await supabase
-        .from('conversations')
-        .select('participants')
-        .limit(1)
-      
-      if (error) {
-        console.error('❌ [inspectDatabase] conversations.participants test failed:', error)
-      } else {
-        console.log('✅ [inspectDatabase] conversations.participants is accessible')
-        if (data && data.length > 0) {
-          console.log('📊 [inspectDatabase] participants type:', typeof data[0].participants, Array.isArray(data[0].participants))
-        }
-      }
-    } catch (err) {
-      console.error('❌ [inspectDatabase] conversations.participants test error:', err)
-    }
-    
-    // Test posts schema
-    try {
-      console.log('🔍 [inspectDatabase] Testing posts schema...')
-      const { data, error } = await supabase
-        .from('posts')
-        .select('user_id, type, title, is_flash_deal, flash_deal_expires_at')
-        .limit(1)
-      
-      if (error) {
-        console.error('❌ [inspectDatabase] posts schema test failed:', error)
-      } else {
-        console.log('✅ [inspectDatabase] posts schema is accessible')
-        if (data && data.length > 0) {
-          console.log('📊 [inspectDatabase] posts sample fields:', Object.keys(data[0]))
-        }
-      }
-    } catch (err) {
-      console.error('❌ [inspectDatabase] posts schema test error:', err)
-    }
-    
-    // Test messages schema
-    try {
-      console.log('🔍 [inspectDatabase] Testing messages schema...')
-      const { data, error } = await supabase
-        .from('messages')
-        .select('sender_id, receiver_id, conversation_id, read')
-        .limit(1)
-      
-      if (error) {
-        console.error('❌ [inspectDatabase] messages schema test failed:', error)
-      } else {
-        console.log('✅ [inspectDatabase] messages schema is accessible')
-        if (data && data.length > 0) {
-          console.log('📊 [inspectDatabase] messages sample fields:', Object.keys(data[0]))
-        }
-      }
-    } catch (err) {
-      console.error('❌ [inspectDatabase] messages schema test error:', err)
-    }
-    
-    console.log('✅ [inspectDatabase] Database inspection complete!')
-    return true
-    
-  } catch (err) {
-    console.error('❌ [inspectDatabase] Database inspection failed:', err)
-    return false
-  }
-} 
+// Legacy exports for compatibility (will be removed)
+export const postsApi = ticketsApi
+export const messagesApi = {}
+export const ridesApi = {}
