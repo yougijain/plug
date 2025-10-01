@@ -17,7 +17,7 @@ import {
   LinkIcon
 } from '@heroicons/react/24/outline';
 import { SavedEmptyIcon, SellingEmptyIcon, BuyingEmptyIcon } from '../components/SVGIcon';
-import CategoryPlaceholder from '../components/CategoryPlaceholder';
+// import CategoryPlaceholder from '../components/CategoryPlaceholder';
 import { useTickets } from '../hooks/useTickets';
 
 const Profile: React.FC = () => {

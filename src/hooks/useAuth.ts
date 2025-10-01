@@ -20,26 +20,59 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { currentUser, setCurrentUser } = useAppStore();
   const [isLoading, setIsLoading] = useState(true);
 
+  // Add a timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn('⚠️ [AuthProvider] Loading timeout reached, forcing loading to false');
+        setIsLoading(false);
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [isLoading]);
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log('🔍 [AuthProvider] Starting auth check...');
         const result = await auth.getCurrentUser();
+        console.log('🔍 [AuthProvider] Auth result:', result);
+        
         if (result && 'user' in result && result.user) {
           const user = result.user as any;
+          console.log('🔍 [AuthProvider] User found:', user.email);
+          
           // Gate access until email verified
           if (user.email_confirmed_at) {
-            // Fetch full user profile from database
-            const fullUser = await userApi.getCurrentUser();
-            if (fullUser) {
-              setCurrentUser(fullUser);
+            console.log('🔍 [AuthProvider] Email confirmed, fetching user profile...');
+            try {
+              // Fetch full user profile from database
+              const fullUser = await userApi.getCurrentUser();
+              if (fullUser) {
+                console.log('✅ [AuthProvider] User profile loaded:', fullUser.name);
+                setCurrentUser(fullUser);
+              } else {
+                console.log('⚠️ [AuthProvider] No user profile found in database');
+                setCurrentUser(null);
+              }
+            } catch (profileError) {
+              console.error('❌ [AuthProvider] Failed to fetch user profile:', profileError);
+              setCurrentUser(null);
             }
           } else {
+            console.log('⚠️ [AuthProvider] Email not confirmed');
             setCurrentUser(null);
           }
+        } else {
+          console.log('🔍 [AuthProvider] No authenticated user');
+          setCurrentUser(null);
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error('❌ [AuthProvider] Auth check failed:', error);
+        setCurrentUser(null);
       } finally {
+        console.log('✅ [AuthProvider] Auth check complete, setting loading to false');
         setIsLoading(false);
       }
     };
@@ -49,23 +82,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Subscribe to auth state changes
     const subscription = auth.onAuthStateChange(async (event, session) => {
       try {
+        console.log('🔍 [AuthProvider] Auth state change:', event, session?.user?.email);
+        
         if (event === 'SIGNED_IN' && session?.user) {
           const user = session.user as any;
           if (user.email_confirmed_at) {
-            // Fetch full user profile from database
-            const fullUser = await userApi.getCurrentUser();
-            if (fullUser) {
-              setCurrentUser(fullUser);
+            try {
+              // Fetch full user profile from database
+              const fullUser = await userApi.getCurrentUser();
+              if (fullUser) {
+                console.log('✅ [AuthProvider] User signed in:', fullUser.name);
+                setCurrentUser(fullUser);
+              } else {
+                console.log('⚠️ [AuthProvider] No user profile found after sign in');
+                setCurrentUser(null);
+              }
+            } catch (profileError) {
+              console.error('❌ [AuthProvider] Failed to fetch user profile after sign in:', profileError);
+              setCurrentUser(null);
             }
           } else {
+            console.log('⚠️ [AuthProvider] Email not confirmed after sign in');
             setCurrentUser(null);
           }
         }
         if (event === 'SIGNED_OUT') {
+          console.log('🔍 [AuthProvider] User signed out');
           setCurrentUser(null);
         }
       } catch (err) {
-        console.error('Auth state change handling failed:', err);
+        console.error('❌ [AuthProvider] Auth state change handling failed:', err);
+        setCurrentUser(null);
       }
     });
 

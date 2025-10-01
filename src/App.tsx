@@ -21,7 +21,7 @@ const AppContent: React.FC = () => {
       try {
         const { supabase } = await import('./lib/supabase');
         const { error } = await supabase
-          .from('posts')
+          .from('campuses')
           .select('id')
           .limit(1);
         
