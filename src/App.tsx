@@ -4,14 +4,11 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import Navigation from './components/Navigation';
 import Home from './pages/Home';
-import LiveNow from './pages/LiveNow';
 import Profile from './pages/Profile';
-import Messages from './pages/Messages';
 import Login from './pages/Login';
-import Post from './pages/Post';
-import Cart from './pages/Cart';
+import CreateTicket from './pages/CreateTicket';
 import Saved from './pages/Saved';
-import PostDetail from './pages/PostDetail';
+import TicketDetail from './pages/TicketDetail';
 import { queryClient } from './lib/queryClient';
 import { AnimatePresence } from 'framer-motion';
 
@@ -57,18 +54,15 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] flex justify-center overflow-hidden">
-      <div className="w-full max-w-md bg-white shadow-2xl relative overflow-hidden pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex justify-center overflow-hidden">
+      <div className="w-full max-w-4xl bg-white shadow-2xl relative overflow-hidden pb-20">
         <AnimatePresence mode="wait">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/live" element={<LiveNow currentUser={currentUser} />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/post" element={<Post />} />
-            <Route path="/post/:id" element={<PostDetail />} />
-            <Route path="/cart" element={<Cart />} />
+            <Route path="/create-ticket" element={<CreateTicket />} />
+            <Route path="/tickets/:id" element={<TicketDetail />} />
             <Route path="/saved" element={<Saved />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AnimatePresence>

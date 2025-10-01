@@ -1,14 +1,14 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { TabType } from '../types/index';
 import { motion } from 'framer-motion';
 import { 
   HomeIcon, 
-  BoltIcon, 
   PlusIcon, 
-  UserCircleIcon, 
-  ChatBubbleLeftRightIcon 
+  HeartIcon,
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
+
+type TabType = 'home' | 'create' | 'saved' | 'profile';
 
 const Navigation: React.FC = () => {
   const location = useLocation();
@@ -17,10 +17,9 @@ const Navigation: React.FC = () => {
   const getActiveTab = (): TabType => {
     const path = location.pathname;
     if (path === '/') return 'home';
-    if (path === '/live') return 'live';
-    if (path === '/post') return 'post';
+    if (path === '/create-ticket') return 'create';
+    if (path === '/saved') return 'saved';
     if (path === '/profile') return 'profile';
-    if (path === '/messages') return 'messages';
     return 'home';
   };
 
@@ -29,17 +28,14 @@ const Navigation: React.FC = () => {
       case 'home':
         navigate('/');
         break;
-      case 'live':
-        navigate('/live');
+      case 'create':
+        navigate('/create-ticket');
         break;
-      case 'post':
-        navigate('/post');
+      case 'saved':
+        navigate('/saved');
         break;
       case 'profile':
         navigate('/profile');
-        break;
-      case 'messages':
-        navigate('/messages');
         break;
     }
   };
@@ -48,74 +44,66 @@ const Navigation: React.FC = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 px-4 py-2 z-50">
-      <div className="relative mx-auto max-w-md">
-        <div className="bg-white border-t border-[#E6E9EE] px-4 py-2 rounded-t-xl shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
-          <div className="grid grid-cols-5 items-end">
+      <div className="relative mx-auto max-w-4xl">
+        <div className="bg-white border-t border-gray-200 px-4 py-2 rounded-t-2xl shadow-[0_-4px_20px_rgba(99,102,241,0.1)]">
+          <div className="grid grid-cols-4 items-end gap-2">
             {/* Home Tab */}
             <motion.button
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleTabChange('home')}
-              className={`flex flex-col items-center space-y-1 p-2 transition-colors ${
-                activeTab === 'home' ? 'text-[#FF6B35]' : 'text-gray-500'
+              className={`flex flex-col items-center space-y-1 p-2 rounded-xl transition-all ${
+                activeTab === 'home' 
+                  ? 'text-indigo-600 bg-indigo-50' 
+                  : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
               <HomeIcon className="h-6 w-6" />
               <span className="text-xs font-medium">Home</span>
             </motion.button>
 
-            {/* Live Tab */}
+            {/* Saved Tab */}
             <motion.button
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => handleTabChange('live')}
-              className={`flex flex-col items-center space-y-1 p-2 transition-colors ${
-                activeTab === 'live' ? 'text-[#FF6B35]' : 'text-gray-500'
+              onClick={() => handleTabChange('saved')}
+              className={`flex flex-col items-center space-y-1 p-2 rounded-xl transition-all ${
+                activeTab === 'saved' 
+                  ? 'text-indigo-600 bg-indigo-50' 
+                  : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
-              <BoltIcon className="h-6 w-6" />
-              <span className="text-xs font-medium">Live</span>
+              <HeartIcon className="h-6 w-6" />
+              <span className="text-xs font-medium">Saved</span>
             </motion.button>
 
-            {/* FAB - Center Column */}
+            {/* Create Tab (FAB) */}
             <div className="flex items-center justify-center relative">
               <motion.button
-                whileHover={{ scale: 1.1 }}
+                whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={() => handleTabChange('post')}
-                className="w-14 h-14 bg-[#FF6B35] rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 z-10 relative -translate-y-3"
-                style={{ boxShadow: '0 10px 25px rgba(255, 107, 53, 0.3)' }}
-                aria-label="Create Post"
+                onClick={() => handleTabChange('create')}
+                className="w-14 h-14 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 z-10 relative -translate-y-2"
+                style={{ boxShadow: '0 10px 30px rgba(99, 102, 241, 0.4)' }}
+                aria-label="Create Ticket"
               >
-                <PlusIcon className="h-6 w-6 text-white" />
+                <PlusIcon className="h-7 w-7 text-white stroke-2" />
               </motion.button>
-              <div className="absolute w-14 h-14 rounded-full bg-[#FF6B35] opacity-20 animate-ping z-0 -translate-y-3" style={{ animationDuration: '5s', animationIterationCount: 'infinite' }}></div>
             </div>
 
             {/* Profile Tab */}
             <motion.button
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleTabChange('profile')}
-              className={`flex flex-col items-center space-y-1 p-2 transition-colors ${
-                activeTab === 'profile' ? 'text-[#FF6B35]' : 'text-gray-500'
+              className={`flex flex-col items-center space-y-1 p-2 rounded-xl transition-all ${
+                activeTab === 'profile' 
+                  ? 'text-indigo-600 bg-indigo-50' 
+                  : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
               <UserCircleIcon className="h-6 w-6" />
               <span className="text-xs font-medium">Profile</span>
-            </motion.button>
-
-            {/* Messages Tab */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleTabChange('messages')}
-              className={`flex flex-col items-center space-y-1 p-2 transition-colors ${
-                activeTab === 'messages' ? 'text-[#FF6B35]' : 'text-gray-500'
-              }`}
-            >
-              <ChatBubbleLeftRightIcon className="h-6 w-6" />
-              <span className="text-xs font-medium">Messages</span>
             </motion.button>
           </div>
         </div>
@@ -124,4 +112,4 @@ const Navigation: React.FC = () => {
   );
 };
 
-export default Navigation; 
+export default Navigation;
