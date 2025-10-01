@@ -12,7 +12,7 @@ import {
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ShareIcon
-from '@heroicons/react/24/outline';
+} from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
