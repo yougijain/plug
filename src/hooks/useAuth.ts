@@ -28,14 +28,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const user = result.user as any;
           // Gate access until email verified
           if (user.email_confirmed_at) {
-            setCurrentUser({
-              id: user.id,
-              email: user.email || '',
-              name: user.user_metadata?.name || '',
-              university: user.user_metadata?.university || '',
-              avatar: user.user_metadata?.avatar,
-              verified: true,
-            });
+            // Fetch full user profile from database
+            const fullUser = await userApi.getCurrentUser();
+            if (fullUser) {
+              setCurrentUser(fullUser);
+            }
           } else {
             setCurrentUser(null);
           }
@@ -50,19 +47,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     checkAuth();
 
     // Subscribe to auth state changes
-    const subscription = auth.onAuthStateChange((event, session) => {
+    const subscription = auth.onAuthStateChange(async (event, session) => {
       try {
         if (event === 'SIGNED_IN' && session?.user) {
           const user = session.user as any;
           if (user.email_confirmed_at) {
-            setCurrentUser({
-              id: user.id,
-              email: user.email || '',
-              name: user.user_metadata?.name || '',
-              university: user.user_metadata?.university || '',
-              avatar: user.user_metadata?.avatar,
-              verified: true,
-            });
+            // Fetch full user profile from database
+            const fullUser = await userApi.getCurrentUser();
+            if (fullUser) {
+              setCurrentUser(fullUser);
+            }
           } else {
             setCurrentUser(null);
           }
@@ -166,20 +160,20 @@ export const useAuth = () => {
         throw err
       }
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log('🔍 [useAuth.signUpMutation] onSuccess called:', data)
       if (data?.user) {
-        console.log('🔍 [useAuth.signUpMutation] Setting current user...')
-        const user = data.user as any; // Type assertion for user_metadata
-        setCurrentUser({
-          id: user.id,
-          email: user.email || '',
-          name: user.user_metadata?.name || '',
-          university: user.user_metadata?.university || '',
-          avatar: user.user_metadata?.avatar,
-          verified: false
-        })
-        console.log('✅ [useAuth.signUpMutation] Current user set')
+        console.log('🔍 [useAuth.signUpMutation] Fetching full user profile...')
+        try {
+          // Fetch full user profile from database
+          const fullUser = await userApi.getCurrentUser();
+          if (fullUser) {
+            setCurrentUser(fullUser);
+            console.log('✅ [useAuth.signUpMutation] Current user set')
+          }
+        } catch (err) {
+          console.error('Failed to fetch user profile:', err);
+        }
       }
     },
     onError: (error) => {
@@ -223,20 +217,20 @@ export const useAuth = () => {
         throw err
       }
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       console.log('🔍 [useAuth.signInMutation] onSuccess called:', data)
       if (data?.user) {
-        console.log('🔍 [useAuth.signInMutation] Setting current user...')
-        const user = data.user as any; // Type assertion for user_metadata
-        setCurrentUser({
-          id: user.id,
-          email: user.email || '',
-          name: user.user_metadata?.name || '',
-          university: user.user_metadata?.university || '',
-          avatar: user.user_metadata?.avatar,
-          verified: false
-        })
-        console.log('✅ [useAuth.signInMutation] Current user set')
+        console.log('🔍 [useAuth.signInMutation] Fetching full user profile...')
+        try {
+          // Fetch full user profile from database
+          const fullUser = await userApi.getCurrentUser();
+          if (fullUser) {
+            setCurrentUser(fullUser);
+            console.log('✅ [useAuth.signInMutation] Current user set')
+          }
+        } catch (err) {
+          console.error('Failed to fetch user profile:', err);
+        }
       }
     },
     onError: (error) => {

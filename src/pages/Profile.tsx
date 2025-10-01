@@ -18,7 +18,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { SavedEmptyIcon, SellingEmptyIcon, BuyingEmptyIcon } from '../components/SVGIcon';
 import CategoryPlaceholder from '../components/CategoryPlaceholder';
-import { usePosts } from '../hooks/usePosts';
+import { useTickets } from '../hooks/useTickets';
 
 const Profile: React.FC = () => {
   const { currentUser, signOut } = useAuth();
@@ -35,9 +35,9 @@ const Profile: React.FC = () => {
     linkedin: 'demo-user-profile'
   };
 
-  // User's posts (selling)
-  const { posts: userPosts, isLoading: isLoadingUserPosts } = usePosts(
-    currentUser?.id ? { userId: currentUser.id } : undefined
+  // User's tickets (selling)
+  const { tickets: userTickets, isLoading: isLoadingUserTickets } = useTickets(
+    currentUser?.id ? { sellerId: currentUser.id } : {}
   );
 
   const buyingOffers = [
@@ -252,7 +252,7 @@ const Profile: React.FC = () => {
         <div className="flex space-x-1">
           {[
             { key: 'saved', label: 'Saved', count: savedPosts.length, icon: HeartIcon },
-            { key: 'selling', label: 'Selling', count: userPosts.length, icon: TagIcon },
+            { key: 'selling', label: 'Selling', count: userTickets.length, icon: TagIcon },
             { key: 'buying', label: 'Buying', count: buyingOffers.length, icon: ShoppingBagIcon }
           ].map((tab) => (
             <button
@@ -286,9 +286,9 @@ const Profile: React.FC = () => {
                         </span>
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-[#0E1F33]">{post.title}</h3>
-                        <p className="text-sm text-gray-600">{post.location}</p>
-                        <p className="text-lg font-bold text-[#FF6B35]">
+                        <h3 className="font-semibold text-[#0E1F33]">{post.event_name}</h3>
+                        <p className="text-sm text-gray-600">{post.event_venue || 'TBD'}</p>
+                        <p className="text-lg font-bold text-indigo-600">
                           {post.price ? `$${post.price}` : 'Free'}
                         </p>
                       </div>
@@ -322,18 +322,20 @@ const Profile: React.FC = () => {
 
         {activeTab === 'selling' && (
           <div>
-            {isLoadingUserPosts ? (
-              <div className="text-center py-12 text-gray-500">Loading your posts...</div>
-            ) : userPosts.length > 0 ? (
+            {isLoadingUserTickets ? (
+              <div className="text-center py-12 text-gray-500">Loading your tickets...</div>
+            ) : userTickets.length > 0 ? (
               <div className="space-y-4">
-                {userPosts.map((item) => (
-                  <div key={item.id} className="bg-white rounded-xl p-4 shadow-lg">
+                {userTickets.map((item) => (
+                  <div key={item.id} className="bg-white rounded-xl p-4 shadow-lg cursor-pointer" onClick={() => navigate(`/tickets/${item.id}`)}>
                     <div className="flex items-center space-x-3 mb-3">
-                      <CategoryPlaceholder category={item.category || item.type} size={48} />
+                      <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-2xl">
+                        🎟️
+                      </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-[#0E1F33]">{item.title}</h3>
-                        <p className="text-sm text-gray-600">{item.location}</p>
-                        <p className="text-lg font-bold text-[#FF6B35]">
+                        <h3 className="font-semibold text-[#0E1F33]">{item.event_name}</h3>
+                        <p className="text-sm text-gray-600">{item.event_venue || 'TBD'}</p>
+                        <p className="text-lg font-bold text-indigo-600">
                           {item.price ? `$${item.price}` : 'Free'}
                         </p>
                       </div>

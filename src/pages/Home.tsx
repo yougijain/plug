@@ -18,7 +18,7 @@ import { format } from 'date-fns';
 const Home: React.FC = () => {
   const { currentUser } = useAuth();
   const { tickets, isLoading } = useTickets({ 
-    campusId: currentUser?.campus_id,
+    campusId: currentUser?.campus_id || undefined,
     status: 'active'
   });
   const { savedTickets, saveTicket, unsaveTicket } = useSavedTickets(currentUser?.id);

@@ -1,21 +1,21 @@
 import { create } from 'zustand'
-import { User, Post } from '../types'
+import { User, Ticket } from '../types'
 
 interface AppState {
   currentUser: User | null
   isLoading: boolean
   error: string | null
-  savedPosts: Post[]
-  cart: Post[]
+  savedPosts: Ticket[]  // Keep name for backward compatibility
+  cart: Ticket[]
   setCurrentUser: (user: User | null) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   clearError: () => void
-  savePost: (post: Post) => void
-  removeSavedPost: (postId: string) => void
-  toggleSavedPost: (post: Post) => void
-  addToCart: (post: Post) => void
-  removeFromCart: (postId: string) => void
+  savePost: (ticket: Ticket) => void
+  removeSavedPost: (ticketId: string) => void
+  toggleSavedPost: (ticket: Ticket) => void
+  addToCart: (ticket: Ticket) => void
+  removeFromCart: (ticketId: string) => void
   clearCart: () => void
 }
 
@@ -35,27 +35,27 @@ export const useAppStore = create<AppState>((set) => ({
     set({ error })
   },
   clearError: () => set({ error: null }),
-  savePost: (post) => set((state) => {
-    const exists = state.savedPosts.some((p) => p.id === post.id)
-    return exists ? state : { savedPosts: [post, ...state.savedPosts] }
+  savePost: (ticket) => set((state) => {
+    const exists = state.savedPosts.some((t) => t.id === ticket.id)
+    return exists ? state : { savedPosts: [ticket, ...state.savedPosts] }
   }),
-  removeSavedPost: (postId) => set((state) => ({
-    savedPosts: state.savedPosts.filter((p) => p.id !== postId)
+  removeSavedPost: (ticketId) => set((state) => ({
+    savedPosts: state.savedPosts.filter((t) => t.id !== ticketId)
   })),
-  toggleSavedPost: (post) => set((state) => {
-    const exists = state.savedPosts.some((p) => p.id === post.id)
+  toggleSavedPost: (ticket) => set((state) => {
+    const exists = state.savedPosts.some((t) => t.id === ticket.id)
     if (exists) {
-      return { savedPosts: state.savedPosts.filter((p) => p.id !== post.id) }
+      return { savedPosts: state.savedPosts.filter((t) => t.id !== ticket.id) }
     } else {
-      return { savedPosts: [post, ...state.savedPosts] }
+      return { savedPosts: [ticket, ...state.savedPosts] }
     }
   }),
-  addToCart: (post) => set((state) => {
-    const exists = state.cart.some((p) => p.id === post.id)
-    return exists ? state : { cart: [post, ...state.cart] }
+  addToCart: (ticket) => set((state) => {
+    const exists = state.cart.some((t) => t.id === ticket.id)
+    return exists ? state : { cart: [ticket, ...state.cart] }
   }),
-  removeFromCart: (postId) => set((state) => ({
-    cart: state.cart.filter((p) => p.id !== postId)
+  removeFromCart: (ticketId) => set((state) => ({
+    cart: state.cart.filter((t) => t.id !== ticketId)
   })),
   clearCart: () => set({ cart: [] }),
 })) 
