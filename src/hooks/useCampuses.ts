@@ -6,6 +6,9 @@ export function useCampuses() {
     queryKey: ['campuses'],
     queryFn: () => campusesApi.getAll(),
     staleTime: 1000 * 60 * 60, // 1 hour (campuses don't change often)
+    retry: 3, // Retry 3 times on failure
+    retryDelay: 1000, // 1 second between retries
+    refetchOnWindowFocus: false, // Don't refetch when window gains focus
   })
 
   return {

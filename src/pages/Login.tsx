@@ -46,7 +46,16 @@ const Login: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const { signUp, signIn, isSigningUp, isSigningIn } = useAuth();
   const { error, clearError } = useAppStore();
-  const { campuses, isLoading: isCampusesLoading } = useCampuses();
+  const { campuses, isLoading: isCampusesLoading, error: campusesError } = useCampuses();
+  
+  // Debug campuses loading
+  React.useEffect(() => {
+    console.log('🔍 [Login] Campuses state:', {
+      campuses: campuses?.length || 0,
+      isLoading: isCampusesLoading,
+      error: campusesError
+    });
+  }, [campuses, isCampusesLoading, campusesError]);
 
   const signUpForm = useForm<SignUpForm>({
     resolver: zodResolver(signUpSchema),
@@ -253,7 +262,12 @@ const Login: React.FC = () => {
                   disabled={isCampusesLoading}
                 >
                   <option value="">
-                    {isCampusesLoading ? 'Loading campuses...' : 'Select your campus'}
+                    {isCampusesLoading 
+                      ? 'Loading campuses...' 
+                      : campusesError 
+                        ? 'Error loading campuses' 
+                        : 'Select your campus'
+                    }
                   </option>
                   {campuses.map((campus) => (
                     <option key={campus.id} value={campus.id}>
@@ -261,6 +275,21 @@ const Login: React.FC = () => {
                     </option>
                   ))}
                 </select>
+                {campusesError && (
+                  <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-600 text-sm font-medium">Failed to load campuses</p>
+                    <p className="text-red-500 text-xs mt-1">
+                      Please refresh the page or try again. If the problem persists, contact support.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => window.location.reload()}
+                      className="mt-2 px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
+                    >
+                      Refresh Page
+                    </button>
+                  </div>
+                )}
                 {signUpForm.formState.errors.campus_id && (
                   <p className="text-red-500 text-xs mt-1">
                     {signUpForm.formState.errors.campus_id.message}
