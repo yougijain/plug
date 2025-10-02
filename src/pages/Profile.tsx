@@ -19,6 +19,7 @@ import {
 import { SavedEmptyIcon, SellingEmptyIcon, BuyingEmptyIcon } from '../components/SVGIcon';
 // import CategoryPlaceholder from '../components/CategoryPlaceholder';
 import { useTickets } from '../hooks/useTickets';
+import { userApi } from '../lib/api';
 
 const Profile: React.FC = () => {
   const { currentUser, signOut } = useAuth();
@@ -71,6 +72,49 @@ const Profile: React.FC = () => {
       console.error('❌ [Profile] Sign out failed:', error);
       // Even if signOut fails, try to navigate away
       window.location.href = '/';
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!currentUser?.id) return;
+    
+    const confirmed = window.confirm(
+      '⚠️ Are you sure you want to delete your account?\n\n' +
+      'This will permanently delete:\n' +
+      '• All your tickets\n' +
+      '• Your saved tickets\n' +
+      '• Your profile and data\n\n' +
+      'This action cannot be undone!'
+    );
+    
+    if (!confirmed) return;
+    
+    const doubleConfirmed = window.confirm(
+      '🚨 FINAL WARNING 🚨\n\n' +
+      'You are about to permanently delete your account.\n' +
+      'Type "DELETE" in the next prompt to confirm.'
+    );
+    
+    if (!doubleConfirmed) return;
+    
+    const finalConfirmation = window.prompt(
+      'Type "DELETE" to permanently delete your account:'
+    );
+    
+    if (finalConfirmation !== 'DELETE') {
+      alert('Account deletion cancelled.');
+      return;
+    }
+    
+    try {
+      console.log('🔍 [Profile] Deleting account...');
+      await userApi.deleteAccount(currentUser.id);
+      console.log('✅ [Profile] Account deleted successfully');
+      alert('Account deleted successfully.');
+      window.location.href = '/';
+    } catch (error) {
+      console.error('❌ [Profile] Account deletion failed:', error);
+      alert('Failed to delete account. Please try again or contact support.');
     }
   };
 
@@ -601,6 +645,17 @@ const Profile: React.FC = () => {
                    >
                      <p className="font-medium text-red-600">Sign out</p>
                      <p className="text-sm text-red-500">End your current session</p>
+                   </motion.button>
+                   
+                   {/* Delete Account - Most dangerous option */}
+                   <motion.button 
+                     whileHover={{ scale: 1.02 }}
+                     whileTap={{ scale: 0.98 }}
+                     onClick={handleDeleteAccount}
+                     className="w-full text-left py-3 px-4 hover:bg-red-100 rounded-lg transition-colors border-l-4 border-l-transparent hover:border-l-red-300"
+                   >
+                     <p className="font-medium text-red-700">Delete Account</p>
+                     <p className="text-sm text-red-600">Permanently delete your account and all data</p>
                    </motion.button>
                  </motion.div>
                </div>
