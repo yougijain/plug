@@ -63,7 +63,7 @@ const Home: React.FC = () => {
   };
 
   const handleNotifications = () => {
-    console.log('Notifications clicked');
+    // TODO: implement notifications panel
   };
 
   // Filter tickets based on search and category

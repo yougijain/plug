@@ -1,57 +1,48 @@
 // Campus Connect API
 import { supabase } from './supabase'
-import type { Database } from '../types/database'
 import type { Campus, User, Ticket, Event, Report, TicketInsert, ReportInsert, EventInsert } from '../types'
-
-type Tables = Database['public']['Tables']
 
 // =============================================================================
 // CAMPUSES API
 // =============================================================================
 export const campusesApi = {
   getAll: async (): Promise<Campus[]> => {
-    console.log('🔍 [campusesApi.getAll] Fetching all campuses...')
-    
     try {
       const { data, error } = await supabase
         .from('campuses')
         .select('*')
-        .eq('is_active', true)
+        .eq('is_active', true as any)
         .order('name')
       
       if (error) {
-        console.error('❌ [campusesApi.getAll] Error:', error)
+        console.error('Failed to fetch campuses:', error.message)
         throw error
       }
       
-      console.log('✅ [campusesApi.getAll] Success:', data?.length || 0, 'campuses')
-      return data || []
+      return (data || []) as unknown as Campus[]
     } catch (err) {
-      console.error('❌ [campusesApi.getAll] Exception:', err)
+      console.error('Campuses fetch exception:', err)
       throw err
     }
   },
 
   getByDomain: async (domain: string): Promise<Campus | null> => {
-    console.log('🔍 [campusesApi.getByDomain] Fetching campus:', domain)
-    
     try {
       const { data, error } = await supabase
         .from('campuses')
         .select('*')
-        .eq('domain', domain.toLowerCase())
-        .eq('is_active', true)
+        .eq('domain', domain.toLowerCase() as any)
+        .eq('is_active', true as any)
         .maybeSingle()
       
       if (error) {
-        console.error('❌ [campusesApi.getByDomain] Error:', error)
+        console.error('Failed to fetch campus by domain:', error.message)
         throw error
       }
       
-      console.log('✅ [campusesApi.getByDomain] Success:', data ? 'found' : 'not found')
-      return data
+      return data as unknown as Campus | null
     } catch (err) {
-      console.error('❌ [campusesApi.getByDomain] Exception:', err)
+      console.error('Campus fetch exception:', err)
       throw err
     }
   }
@@ -62,36 +53,36 @@ export const campusesApi = {
 // =============================================================================
 export const userApi = {
   getCurrentUser: async (): Promise<User | null> => {
-    console.log('🔍 [userApi.getCurrentUser] Starting...')
-    
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser()
       
       if (authError) {
-        console.error('❌ [userApi.getCurrentUser] Auth error:', authError)
+        console.error('Auth error:', authError.message)
         throw authError
       }
       
       if (!user) {
-        console.log('🔍 [userApi.getCurrentUser] No auth user found')
         return null
       }
       
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('id', user.id)
-        .single()
+        .eq('id', user.id as any)
+        .maybeSingle()
       
       if (error) {
-        console.error('❌ [userApi.getCurrentUser] Database error:', error)
+        // Treat "no rows" as null (profile not created yet)
+        if ((error as any)?.code === 'PGRST116' || error.message?.toLowerCase().includes('no rows')) {
+          return null
+        }
+        console.error('Failed to fetch user:', error.message)
         throw error
       }
       
-      console.log('✅ [userApi.getCurrentUser] Success')
-      return data
+      return data ? (data as unknown as User) : null
     } catch (err) {
-      console.error('❌ [userApi.getCurrentUser] Exception:', err)
+      console.error('Get current user exception:', err)
       throw err
     }
   },
@@ -105,8 +96,6 @@ export const userApi = {
     date_of_birth: string
     avatar?: string
   }): Promise<User> => {
-    console.log('🔍 [userApi.createUser] Creating user...', params.email)
-    
     try {
       // Validate .edu email
       const domain = params.email.split('@')[1]?.toLowerCase()
@@ -128,100 +117,89 @@ export const userApi = {
           reputation_score: 0,
           successful_sales: 0,
           is_banned: false
-        }, { onConflict: 'id' })
+        } as any, { onConflict: 'id' })
         .select()
         .single()
       
       if (error) {
-        console.error('❌ [userApi.createUser] Error:', error)
+        console.error('Failed to create user:', error.message)
         throw error
       }
       
-      console.log('✅ [userApi.createUser] Success')
-      return data
+      return data as unknown as User
     } catch (err) {
-      console.error('❌ [userApi.createUser] Exception:', err)
+      console.error('Create user exception:', err)
       throw err
     }
   },
 
   updateProfile: async (userId: string, updates: Partial<User>): Promise<User> => {
-    console.log('🔍 [userApi.updateProfile] Updating user:', userId)
-    
     try {
       const { data, error } = await supabase
         .from('users')
-        .update(updates)
-        .eq('id', userId)
+        .update(updates as any)
+        .eq('id', userId as any)
         .select()
         .single()
       
       if (error) {
-        console.error('❌ [userApi.updateProfile] Error:', error)
+        console.error('Failed to update profile:', error.message)
         throw error
       }
       
-      console.log('✅ [userApi.updateProfile] Success')
-      return data
+      return data as unknown as User
     } catch (err) {
-      console.error('❌ [userApi.updateProfile] Exception:', err)
+      console.error('Update profile exception:', err)
       throw err
     }
   },
 
   deleteAccount: async (userId: string): Promise<void> => {
-    console.log('🔍 [userApi.deleteAccount] Deleting user:', userId)
-    
     try {
       // First, delete all user's tickets
-      await supabase.from('tickets').delete().eq('seller_id', userId)
+      await supabase.from('tickets').delete().eq('seller_id', userId as any)
       
       // Delete saved tickets
-      await supabase.from('saved_tickets').delete().eq('user_id', userId)
+      await supabase.from('saved_tickets').delete().eq('user_id', userId as any)
       
       // Delete reports
-      await supabase.from('reports').delete().eq('reporter_id', userId)
+      await supabase.from('reports').delete().eq('reporter_id', userId as any)
       
       // Delete reputation records
-      await supabase.from('reputation').delete().eq('user_id', userId)
+      await supabase.from('reputation').delete().eq('user_id', userId as any)
       
       // Finally, delete user
-      const { error } = await supabase.from('users').delete().eq('id', userId)
+      const { error } = await supabase.from('users').delete().eq('id', userId as any)
       
       if (error) {
-        console.error('❌ [userApi.deleteAccount] Error:', error)
+        console.error('Failed to delete account:', error.message)
         throw error
       }
       
       // Delete auth user
       await supabase.auth.admin.deleteUser(userId)
-      
-      console.log('✅ [userApi.deleteAccount] Success')
     } catch (err) {
-      console.error('❌ [userApi.deleteAccount] Exception:', err)
+      console.error('Delete account exception:', err)
       throw err
     }
   },
 
   getById: async (userId: string): Promise<User | null> => {
-    console.log('🔍 [userApi.getById] Fetching user:', userId)
-    
     try {
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('id', userId)
+        .eq('id', userId as any)
         .single()
       
       if (error) {
-        console.error('❌ [userApi.getById] Error:', error)
+        console.error('Failed to fetch user:', error.message)
         throw error
       }
       
-      console.log('✅ [userApi.getById] Success')
-      return data
+      return data as unknown as User | null
     } catch (err) {
-      console.error('❌ [userApi.getById] Exception:', err)
+      console.error('Get user by ID exception:', err)
       throw err
     }
   }
@@ -232,48 +210,42 @@ export const userApi = {
 // =============================================================================
 export const eventsApi = {
   create: async (eventData: Omit<EventInsert, 'id' | 'created_at' | 'updated_at'>): Promise<Event> => {
-    console.log('🔍 [eventsApi.create] Creating event...', eventData.name)
-    
     try {
       const { data, error } = await supabase
         .from('events')
-        .insert(eventData)
+        .insert(eventData as any)
         .select()
         .single()
       
       if (error) {
-        console.error('❌ [eventsApi.create] Error:', error)
+        console.error('Failed to create event:', error.message)
         throw error
       }
       
-      console.log('✅ [eventsApi.create] Success')
-      return data
+      return data as unknown as Event
     } catch (err) {
-      console.error('❌ [eventsApi.create] Exception:', err)
+      console.error('Create event exception:', err)
       throw err
     }
   },
 
   getByCampus: async (campusId: string): Promise<Event[]> => {
-    console.log('🔍 [eventsApi.getByCampus] Fetching events for campus:', campusId)
-    
     try {
       const { data, error } = await supabase
         .from('events')
         .select('*')
-        .eq('campus_id', campusId)
+        .eq('campus_id', campusId as any)
         .gte('event_date', new Date().toISOString())
         .order('event_date')
       
       if (error) {
-        console.error('❌ [eventsApi.getByCampus] Error:', error)
+        console.error('Failed to fetch events:', error.message)
         throw error
       }
       
-      console.log('✅ [eventsApi.getByCampus] Success:', data?.length || 0, 'events')
-      return data || []
+      return (data || []) as unknown as Event[]
     } catch (err) {
-      console.error('❌ [eventsApi.getByCampus] Exception:', err)
+      console.error('Get events by campus exception:', err)
       throw err
     }
   }
@@ -289,8 +261,6 @@ export const ticketsApi = {
     status?: string
     search?: string
   }): Promise<Ticket[]> => {
-    console.log('🔍 [ticketsApi.getAll] Fetching tickets...', filters)
-    
     try {
       let query = supabase
         .from('tickets')
@@ -314,15 +284,15 @@ export const ticketsApi = {
         .order('created_at', { ascending: false })
       
       if (filters?.campusId) {
-        query = query.eq('campus_id', filters.campusId)
+        query = query.eq('campus_id', filters.campusId as any)
       }
       if (filters?.sellerId) {
-        query = query.eq('seller_id', filters.sellerId)
+        query = query.eq('seller_id', filters.sellerId as any)
       }
       if (filters?.status) {
-        query = query.eq('status', filters.status)
+        query = query.eq('status', filters.status as any)
       } else {
-        query = query.eq('status', 'active')
+        query = query.eq('status', 'active' as any)
       }
       if (filters?.search) {
         query = query.or(`title.ilike.%${filters.search}%,event_name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
@@ -331,21 +301,18 @@ export const ticketsApi = {
       const { data, error } = await query
       
       if (error) {
-        console.error('❌ [ticketsApi.getAll] Error:', error)
+        console.error('Failed to fetch tickets:', error.message)
         throw error
       }
       
-      console.log('✅ [ticketsApi.getAll] Success:', data?.length || 0, 'tickets')
-      return (data || []) as Ticket[]
+      return (data || []) as unknown as Ticket[]
     } catch (err) {
-      console.error('❌ [ticketsApi.getAll] Exception:', err)
+      console.error('Get tickets exception:', err)
       throw err
     }
   },
 
   getById: async (id: string): Promise<Ticket | null> => {
-    console.log('🔍 [ticketsApi.getById] Fetching ticket:', id)
-    
     try {
       const { data, error } = await supabase
         .from('tickets')
@@ -366,31 +333,29 @@ export const ticketsApi = {
             domain
           )
         `)
-        .eq('id', id)
+        .eq('id', id as any)
         .single()
       
       if (error) {
-        console.error('❌ [ticketsApi.getById] Error:', error)
+        console.error('Failed to fetch ticket:', error.message)
         throw error
       }
       
       // Increment view count
+      const ticketData = data as any
       await supabase
         .from('tickets')
-        .update({ views: (data.views || 0) + 1 })
-        .eq('id', id)
+        .update({ views: (ticketData.views || 0) + 1 } as any)
+        .eq('id', id as any)
       
-      console.log('✅ [ticketsApi.getById] Success')
-      return data as Ticket
+      return data as unknown as Ticket
     } catch (err) {
-      console.error('❌ [ticketsApi.getById] Exception:', err)
+      console.error('Get ticket by ID exception:', err)
       throw err
     }
   },
 
   create: async (ticketData: Omit<TicketInsert, 'id' | 'created_at' | 'updated_at'>): Promise<Ticket> => {
-    console.log('🔍 [ticketsApi.create] Creating ticket...', ticketData.title)
-    
     try {
       const { data, error } = await supabase
         .from('tickets')
@@ -399,50 +364,44 @@ export const ticketsApi = {
           status: 'active',
           views: 0,
           quantity_sold: 0
-        })
+        } as any)
         .select()
         .single()
       
       if (error) {
-        console.error('❌ [ticketsApi.create] Error:', error)
+        console.error('Failed to create ticket:', error.message)
         throw error
       }
       
-      console.log('✅ [ticketsApi.create] Success')
-      return data
+      return data as unknown as Ticket
     } catch (err) {
-      console.error('❌ [ticketsApi.create] Exception:', err)
+      console.error('Create ticket exception:', err)
       throw err
     }
   },
 
   update: async (id: string, updates: Partial<Ticket>): Promise<Ticket> => {
-    console.log('🔍 [ticketsApi.update] Updating ticket:', id)
-    
     try {
       const { data, error } = await supabase
         .from('tickets')
-        .update(updates)
-        .eq('id', id)
+        .update(updates as any)
+        .eq('id', id as any)
         .select()
         .single()
       
       if (error) {
-        console.error('❌ [ticketsApi.update] Error:', error)
+        console.error('Failed to update ticket:', error.message)
         throw error
       }
       
-      console.log('✅ [ticketsApi.update] Success')
-      return data
+      return data as unknown as Ticket
     } catch (err) {
-      console.error('❌ [ticketsApi.update] Exception:', err)
+      console.error('Update ticket exception:', err)
       throw err
     }
   },
 
   markSold: async (ticketId: string, quantity?: number): Promise<void> => {
-    console.log('🔍 [ticketsApi.markSold] Marking ticket sold:', ticketId)
-    
     try {
       const { error } = await supabase.rpc('mark_ticket_sold', {
         ticket_id: ticketId,
@@ -450,34 +409,28 @@ export const ticketsApi = {
       })
       
       if (error) {
-        console.error('❌ [ticketsApi.markSold] Error:', error)
+        console.error('Failed to mark ticket sold:', error.message)
         throw error
       }
-      
-      console.log('✅ [ticketsApi.markSold] Success')
     } catch (err) {
-      console.error('❌ [ticketsApi.markSold] Exception:', err)
+      console.error('Mark ticket sold exception:', err)
       throw err
     }
   },
 
   delete: async (id: string): Promise<void> => {
-    console.log('🔍 [ticketsApi.delete] Deleting ticket:', id)
-    
     try {
       const { error } = await supabase
         .from('tickets')
         .delete()
-        .eq('id', id)
+        .eq('id', id as any)
       
       if (error) {
-        console.error('❌ [ticketsApi.delete] Error:', error)
+        console.error('Failed to delete ticket:', error.message)
         throw error
       }
-      
-      console.log('✅ [ticketsApi.delete] Success')
     } catch (err) {
-      console.error('❌ [ticketsApi.delete] Exception:', err)
+      console.error('Delete ticket exception:', err)
       throw err
     }
   }
@@ -488,34 +441,29 @@ export const ticketsApi = {
 // =============================================================================
 export const reportsApi = {
   create: async (reportData: Omit<ReportInsert, 'id' | 'created_at'>): Promise<Report> => {
-    console.log('🔍 [reportsApi.create] Creating report...', reportData.reason)
-    
     try {
       const { data, error } = await supabase
         .from('reports')
         .insert({
           ...reportData,
           status: 'pending'
-        })
+        } as any)
         .select()
         .single()
       
       if (error) {
-        console.error('❌ [reportsApi.create] Error:', error)
+        console.error('Failed to create report:', error.message)
         throw error
       }
       
-      console.log('✅ [reportsApi.create] Success')
-      return data
+      return data as unknown as Report
     } catch (err) {
-      console.error('❌ [reportsApi.create] Exception:', err)
+      console.error('Create report exception:', err)
       throw err
     }
   },
 
   getAll: async (status?: string): Promise<Report[]> => {
-    console.log('🔍 [reportsApi.getAll] Fetching reports...')
-    
     try {
       let query = supabase
         .from('reports')
@@ -523,44 +471,40 @@ export const reportsApi = {
         .order('created_at', { ascending: false })
       
       if (status) {
-        query = query.eq('status', status)
+        query = query.eq('status', status as any)
       }
       
       const { data, error } = await query
       
       if (error) {
-        console.error('❌ [reportsApi.getAll] Error:', error)
+        console.error('Failed to fetch reports:', error.message)
         throw error
       }
       
-      console.log('✅ [reportsApi.getAll] Success:', data?.length || 0, 'reports')
-      return data || []
+      return (data || []) as unknown as Report[]
     } catch (err) {
-      console.error('❌ [reportsApi.getAll] Exception:', err)
+      console.error('Get reports exception:', err)
       throw err
     }
   },
 
   update: async (id: string, updates: Partial<Report>): Promise<Report> => {
-    console.log('🔍 [reportsApi.update] Updating report:', id)
-    
     try {
       const { data, error } = await supabase
         .from('reports')
-        .update(updates)
-        .eq('id', id)
+        .update(updates as any)
+        .eq('id', id as any)
         .select()
         .single()
       
       if (error) {
-        console.error('❌ [reportsApi.update] Error:', error)
+        console.error('Failed to update report:', error.message)
         throw error
       }
       
-      console.log('✅ [reportsApi.update] Success')
-      return data
+      return data as unknown as Report
     } catch (err) {
-      console.error('❌ [reportsApi.update] Exception:', err)
+      console.error('Update report exception:', err)
       throw err
     }
   }
@@ -571,8 +515,6 @@ export const reportsApi = {
 // =============================================================================
 export const savedTicketsApi = {
   getSaved: async (userId: string): Promise<Ticket[]> => {
-    console.log('🔍 [savedTicketsApi.getSaved] Fetching saved tickets for user:', userId)
-    
     try {
       const { data, error } = await supabase
         .from('saved_tickets')
@@ -589,66 +531,57 @@ export const savedTicketsApi = {
             )
           )
         `)
-        .eq('user_id', userId)
+        .eq('user_id', userId as any)
         .order('created_at', { ascending: false })
       
       if (error) {
-        console.error('❌ [savedTicketsApi.getSaved] Error:', error)
+        console.error('Failed to fetch saved tickets:', error.message)
         throw error
       }
       
       // Extract tickets from the join
       const tickets = data?.map((item: any) => item.tickets).filter(Boolean) || []
       
-      console.log('✅ [savedTicketsApi.getSaved] Success:', tickets.length, 'tickets')
-      return tickets as Ticket[]
+      return tickets as unknown as Ticket[]
     } catch (err) {
-      console.error('❌ [savedTicketsApi.getSaved] Exception:', err)
+      console.error('Get saved tickets exception:', err)
       throw err
     }
   },
 
   save: async (userId: string, ticketId: string): Promise<void> => {
-    console.log('🔍 [savedTicketsApi.save] Saving ticket...', ticketId)
-    
     try {
       const { error } = await supabase
         .from('saved_tickets')
         .insert({
           user_id: userId,
           ticket_id: ticketId
-        })
+        } as any)
       
       if (error) {
-        console.error('❌ [savedTicketsApi.save] Error:', error)
+        console.error('Failed to save ticket:', error.message)
         throw error
       }
-      
-      console.log('✅ [savedTicketsApi.save] Success')
     } catch (err) {
-      console.error('❌ [savedTicketsApi.save] Exception:', err)
+      console.error('Save ticket exception:', err)
       throw err
     }
   },
 
   unsave: async (userId: string, ticketId: string): Promise<void> => {
-    console.log('🔍 [savedTicketsApi.unsave] Unsaving ticket...', ticketId)
-    
     try {
       const { error } = await supabase
         .from('saved_tickets')
         .delete()
-        .eq('user_id', userId)
-        .eq('ticket_id', ticketId)
+        .eq('user_id', userId as any)
+        .eq('ticket_id', ticketId as any)
       
       if (error) {
-        console.error('❌ [savedTicketsApi.unsave] Error:', error)
+        console.error('Failed to unsave ticket:', error.message)
         throw error
       }
-      
-      console.log('✅ [savedTicketsApi.unsave] Success')
     } catch (err) {
-      console.error('❌ [savedTicketsApi.unsave] Exception:', err)
+      console.error('Unsave ticket exception:', err)
       throw err
     }
   }

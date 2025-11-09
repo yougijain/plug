@@ -15,27 +15,22 @@ import { AnimatePresence } from 'framer-motion';
 const AppContent: React.FC = () => {
   const { currentUser, isLoading } = useAuth();
 
-  // Test Supabase connection on app start
+  // Handle email verification redirect and check session
   useEffect(() => {
-    const testConnection = async () => {
+    const handleAuthRedirect = async () => {
       try {
-        const { supabase } = await import('./lib/supabase');
-        const { error } = await supabase
-          .from('campuses')
-          .select('id')
-          .limit(1);
-        
-        if (error) {
-          console.error('❌ Supabase connection failed:', error);
-        } else {
-          console.log('✅ Supabase connected successfully');
+        // Check for auth hash in URL (from email verification)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        if (hashParams.get('type') === 'recovery' || hashParams.get('type') === 'signup') {
+          // Clear the hash to clean up URL
+          window.history.replaceState(null, '', window.location.pathname);
         }
       } catch (err) {
-        console.error('❌ Failed to test Supabase connection:', err);
+        // Silently handle - not critical
       }
     };
     
-    testConnection();
+    handleAuthRedirect();
   }, []);
 
   if (isLoading) {

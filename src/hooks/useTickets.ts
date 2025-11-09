@@ -78,8 +78,6 @@ export function useTickets(filters?: {
 }
 
 export function useTicket(id: string | undefined) {
-  const { setError } = useAppStore()
-
   const { data: ticket, isLoading, error } = useQuery({
     queryKey: ['ticket', id],
     queryFn: () => id ? ticketsApi.getById(id) : Promise.resolve(null),

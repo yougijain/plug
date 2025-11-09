@@ -25,15 +25,9 @@ export const useAppStore = create<AppState>((set) => ({
   error: null,
   savedPosts: [],
   cart: [],
-  setCurrentUser: (user) => {
-    console.log('🔍 [store] setCurrentUser called with:', user)
-    set({ currentUser: user })
-  },
+  setCurrentUser: (user) => set({ currentUser: user }),
   setLoading: (loading) => set({ isLoading: loading }),
-  setError: (error) => {
-    console.log('🔍 [store] setError called with:', error)
-    set({ error })
-  },
+  setError: (error) => set({ error }),
   clearError: () => set({ error: null }),
   savePost: (ticket) => set((state) => {
     const exists = state.savedPosts.some((t) => t.id === ticket.id)

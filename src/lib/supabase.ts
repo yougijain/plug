@@ -19,104 +19,89 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
 // Auth helper functions
 export const auth = {
   signUp: async (email: string, password: string, userData: any) => {
-    console.log('🔍 [auth.signUp] Starting...', { email, userData })
-    
     try {
-      console.log('🔍 [auth.signUp] Calling supabase.auth.signUp...')
+      const redirectUrl = typeof window !== 'undefined' ? window.location.origin : undefined
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: userData
+          data: userData,
+          emailRedirectTo: redirectUrl
         }
       })
       
       if (error) {
-        console.error('❌ [auth.signUp] Supabase error:', error)
-      } else {
-        console.log('✅ [auth.signUp] Supabase signup successful:', data)
+        console.error('Sign up error:', error.message)
       }
       
       return { data, error }
     } catch (err) {
-      console.error('❌ [auth.signUp] Exception:', err)
+      console.error('Sign up exception:', err)
       return { data: null, error: err }
     }
   },
 
   signIn: async (email: string, password: string) => {
-    console.log('🔍 [auth.signIn] Starting...', { email })
-    
     try {
-      console.log('🔍 [auth.signIn] Calling supabase.auth.signInWithPassword...')
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       })
       
       if (error) {
-        console.error('❌ [auth.signIn] Supabase error:', error)
-      } else {
-        console.log('✅ [auth.signIn] Supabase signin successful:', data)
+        console.error('Sign in error:', error.message)
+        return { data: null, error }
       }
       
-      return { data, error }
+      // Return both user and session
+      return { 
+        data: {
+          user: data.user,
+          session: data.session
+        }, 
+        error: null 
+      }
     } catch (err) {
-      console.error('❌ [auth.signIn] Exception:', err)
+      console.error('Sign in exception:', err)
       return { data: null, error: err }
     }
   },
 
   signOut: async () => {
-    console.log('🔍 [auth.signOut] Starting...')
-    
     try {
-      console.log('🔍 [auth.signOut] Calling supabase.auth.signOut...')
       const { error } = await supabase.auth.signOut()
       
       if (error) {
-        console.error('❌ [auth.signOut] Supabase error:', error)
-      } else {
-        console.log('✅ [auth.signOut] Supabase signout successful')
+        console.error('Sign out error:', error.message)
       }
       
       return { error }
     } catch (err) {
-      console.error('❌ [auth.signOut] Exception:', err)
+      console.error('Sign out exception:', err)
       return { error: err }
     }
   },
 
   getCurrentUser: async () => {
-    console.log('🔍 [auth.getCurrentUser] Starting...')
-    
     try {
-      console.log('🔍 [auth.getCurrentUser] Calling supabase.auth.getUser...')
       const { data: { user }, error } = await supabase.auth.getUser()
       
       if (error) {
-        console.error('❌ [auth.getCurrentUser] Supabase error:', error)
-      } else {
-        console.log('✅ [auth.getCurrentUser] Supabase getUser successful:', user)
+        console.error('Get user error:', error.message)
       }
       
       return { user, error }
     } catch (err) {
-      console.error('❌ [auth.getCurrentUser] Exception:', err)
+      console.error('Get user exception:', err)
       return { user: null, error: err }
     }
   },
 
   onAuthStateChange: (callback: (event: string, session: any) => void) => {
-    console.log('🔍 [auth.onAuthStateChange] Setting up auth state listener...')
-    
     try {
-      console.log('🔍 [auth.onAuthStateChange] Calling supabase.auth.onAuthStateChange...')
-      const result = supabase.auth.onAuthStateChange(callback)
-      console.log('✅ [auth.onAuthStateChange] Auth state listener set up')
-      return result
+      return supabase.auth.onAuthStateChange(callback)
     } catch (err) {
-      console.error('❌ [auth.onAuthStateChange] Exception:', err)
+      console.error('Auth state change exception:', err)
       return { data: { subscription: { unsubscribe: () => {} } } }
     }
   }

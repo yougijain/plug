@@ -6,8 +6,7 @@ import {
   ChevronLeftIcon,
   HeartIcon,
   CalendarIcon,
-  MapPinIcon,
-  TicketIcon
+  MapPinIcon
 } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';

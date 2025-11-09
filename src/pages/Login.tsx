@@ -48,14 +48,6 @@ const Login: React.FC = () => {
   const { error, clearError } = useAppStore();
   const { campuses, isLoading: isCampusesLoading, error: campusesError } = useCampuses();
   
-  // Debug campuses loading
-  React.useEffect(() => {
-    console.log('🔍 [Login] Campuses state:', {
-      campuses: campuses?.length || 0,
-      isLoading: isCampusesLoading,
-      error: campusesError
-    });
-  }, [campuses, isCampusesLoading, campusesError]);
 
   const signUpForm = useForm<SignUpForm>({
     resolver: zodResolver(signUpSchema),

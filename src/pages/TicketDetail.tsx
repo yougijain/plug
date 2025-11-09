@@ -5,15 +5,12 @@ import { useTicket } from '../hooks/useTickets';
 import { useReports } from '../hooks/useReports';
 import {
   ChevronLeftIcon,
-  HeartIcon,
   CalendarIcon,
   MapPinIcon,
-  UserIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
   ShareIcon
 } from '@heroicons/react/24/outline';
-import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 
@@ -62,7 +59,7 @@ const TicketDetail: React.FC = () => {
           url: window.location.href
         });
       } catch (error) {
-        console.log('Share failed:', error);
+        console.error('Share failed:', error);
       }
     } else {
       // Fallback: Copy to clipboard

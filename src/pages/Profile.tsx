@@ -61,16 +61,11 @@ const Profile: React.FC = () => {
   ];
 
   const handleSignOut = async () => {
-    console.log('🔍 [Profile] Sign out clicked');
     try {
-      console.log('🔍 [Profile] Calling signOut...');
       await signOut();
-      console.log('✅ [Profile] Sign out successful');
-      // Force navigate to login page
       window.location.href = '/';
     } catch (error) {
       console.error('❌ [Profile] Sign out failed:', error);
-      // Even if signOut fails, try to navigate away
       window.location.href = '/';
     }
   };
@@ -107,9 +102,7 @@ const Profile: React.FC = () => {
     }
     
     try {
-      console.log('🔍 [Profile] Deleting account...');
       await userApi.deleteAccount(currentUser.id);
-      console.log('✅ [Profile] Account deleted successfully');
       alert('Account deleted successfully.');
       window.location.href = '/';
     } catch (error) {
@@ -630,17 +623,15 @@ const Profile: React.FC = () => {
                    <motion.button 
                      whileHover={{ scale: 1.02 }}
                      whileTap={{ scale: 0.98 }}
-                     onClick={async () => {
-                       console.log('🔍 [Profile] Settings sign out clicked');
-                       try {
-                         await signOut();
-                         console.log('✅ [Profile] Settings sign out successful');
-                         window.location.href = '/';
-                       } catch (error) {
-                         console.error('❌ [Profile] Settings sign out failed:', error);
-                         window.location.href = '/';
-                       }
-                     }}
+                    onClick={async () => {
+                      try {
+                        await signOut();
+                        window.location.href = '/';
+                      } catch (error) {
+                        console.error('❌ [Profile] Settings sign out failed:', error);
+                        window.location.href = '/';
+                      }
+                    }}
                      className="w-full text-left py-3 px-4 hover:bg-red-50 rounded-lg transition-colors border-l-4 border-l-transparent hover:border-l-red-200"
                    >
                      <p className="font-medium text-red-600">Sign out</p>

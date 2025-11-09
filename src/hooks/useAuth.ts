@@ -6,6 +6,86 @@ import { userApi } from '../lib/api'
 import { useAppStore } from '../lib/store'
 import type { User } from '../types'
 
+const extractMetadataValue = (metadata: Record<string, any>, keys: string[]): string | undefined => {
+  for (const key of keys) {
+    const value = metadata?.[key]
+    if (value !== undefined && value !== null && value !== '') {
+      return value
+    }
+  }
+  return undefined
+}
+
+const ensureUserProfile = async (
+  supabaseUser: any,
+  setCurrentUser: (user: User | null) => void,
+  setError?: (message: string) => void
+) => {
+  if (!supabaseUser?.id) {
+    return
+  }
+
+  if (!supabaseUser.email_confirmed_at) {
+    setCurrentUser(null)
+    setError?.('Please confirm your email before signing in.')
+    return
+  }
+
+  try {
+    const existingUser = await userApi.getCurrentUser()
+    if (existingUser) {
+      setCurrentUser(existingUser)
+      return
+    }
+  } catch (err) {
+    console.error('Failed to load existing user profile:', err)
+  }
+
+  const metadata = supabaseUser.user_metadata || {}
+
+  const campusId =
+    extractMetadataValue(metadata, ['campus_id', 'campusId', 'campusid']) ||
+    (typeof metadata.campus === 'string' ? metadata.campus : metadata.campus?.id)
+
+  const name =
+    extractMetadataValue(metadata, ['name', 'full_name', 'fullName']) ||
+    (supabaseUser.email ? supabaseUser.email.split('@')[0] : 'Student')
+
+  const university =
+    extractMetadataValue(metadata, ['university', 'school', 'campus_name', 'campusName']) || ''
+
+  const dateOfBirth =
+    extractMetadataValue(metadata, ['date_of_birth', 'dateOfBirth', 'dob']) || ''
+
+  const avatar =
+    extractMetadataValue(metadata, ['avatar', 'avatar_url', 'avatarUrl', 'profile_image']) || undefined
+
+  if (!campusId || !dateOfBirth) {
+    const message =
+      'We could not find your campus or profile information. Please complete sign up again to continue.'
+    setError?.(message)
+    setCurrentUser(null)
+    return
+  }
+
+  try {
+    const createdUser = await userApi.createUser({
+      id: supabaseUser.id,
+      email: supabaseUser.email || '',
+      name,
+      university,
+      campus_id: campusId,
+      date_of_birth: dateOfBirth,
+      avatar,
+    })
+    setCurrentUser(createdUser)
+  } catch (err) {
+    console.error('Failed to backfill user profile:', err)
+    setError?.('We were unable to load your profile. Please try again or contact support.')
+    setCurrentUser(null)
+  }
+}
+
 // Create AuthContext
 const AuthContext = createContext<{
   currentUser: User | null;
@@ -24,7 +104,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (isLoading) {
-        console.warn('⚠️ [AuthProvider] Loading timeout reached, forcing loading to false');
         setIsLoading(false);
       }
     }, 10000); // 10 second timeout
@@ -35,44 +114,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        console.log('🔍 [AuthProvider] Starting auth check...');
         const result = await auth.getCurrentUser();
-        console.log('🔍 [AuthProvider] Auth result:', result);
         
         if (result && 'user' in result && result.user) {
-          const user = result.user as any;
-          console.log('🔍 [AuthProvider] User found:', user.email);
-          
-          // Gate access until email verified
-          if (user.email_confirmed_at) {
-            console.log('🔍 [AuthProvider] Email confirmed, fetching user profile...');
-            try {
-              // Fetch full user profile from database
-              const fullUser = await userApi.getCurrentUser();
-              if (fullUser) {
-                console.log('✅ [AuthProvider] User profile loaded:', fullUser.name);
-                setCurrentUser(fullUser);
-              } else {
-                console.log('⚠️ [AuthProvider] No user profile found in database');
-                setCurrentUser(null);
-              }
-            } catch (profileError) {
-              console.error('❌ [AuthProvider] Failed to fetch user profile:', profileError);
-              setCurrentUser(null);
-            }
-          } else {
-            console.log('⚠️ [AuthProvider] Email not confirmed');
-            setCurrentUser(null);
-          }
+          await ensureUserProfile(result.user, setCurrentUser)
         } else {
-          console.log('🔍 [AuthProvider] No authenticated user');
           setCurrentUser(null);
         }
       } catch (error) {
-        console.error('❌ [AuthProvider] Auth check failed:', error);
+        console.error('Auth check failed:', error);
         setCurrentUser(null);
       } finally {
-        console.log('✅ [AuthProvider] Auth check complete, setting loading to false');
         setIsLoading(false);
       }
     };
@@ -82,36 +134,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Subscribe to auth state changes
     const subscription = auth.onAuthStateChange(async (event, session) => {
       try {
-        console.log('🔍 [AuthProvider] Auth state change:', event, session?.user?.email);
-        
         if (event === 'SIGNED_IN' && session?.user) {
-          const user = session.user as any;
-          if (user.email_confirmed_at) {
-            try {
-              // Fetch full user profile from database
-              const fullUser = await userApi.getCurrentUser();
-              if (fullUser) {
-                console.log('✅ [AuthProvider] User signed in:', fullUser.name);
-                setCurrentUser(fullUser);
-              } else {
-                console.log('⚠️ [AuthProvider] No user profile found after sign in');
-                setCurrentUser(null);
-              }
-            } catch (profileError) {
-              console.error('❌ [AuthProvider] Failed to fetch user profile after sign in:', profileError);
-              setCurrentUser(null);
-            }
-          } else {
-            console.log('⚠️ [AuthProvider] Email not confirmed after sign in');
-            setCurrentUser(null);
-          }
+          await ensureUserProfile(session.user, setCurrentUser)
         }
         if (event === 'SIGNED_OUT') {
-          console.log('🔍 [AuthProvider] User signed out');
           setCurrentUser(null);
         }
+        if (event === 'TOKEN_REFRESHED' && session?.user) {
+          // Refresh user profile when token is refreshed
+          await ensureUserProfile(session.user, setCurrentUser)
+        }
       } catch (err) {
-        console.error('❌ [AuthProvider] Auth state change handling failed:', err);
+        console.error('Auth state change handling failed:', err);
         setCurrentUser(null);
       }
     });
@@ -146,16 +180,12 @@ export const useAuth = () => {
         avatar?: string
       }
     }) => {
-      console.log('🔍 [useAuth.signUpMutation] Starting signup...', { email, userData })
       clearError() // Clear any previous errors
       
       try {
-        console.log('🔍 [useAuth.signUpMutation] Calling auth.signUp...')
         const { data, error } = await auth.signUp(email, password, userData)
         
         if (error) {
-          console.error('❌ [useAuth.signUpMutation] Auth signup error:', error)
-          
           // Provide user-friendly error messages
           let errorMessage = 'Sign up failed. Please try again.';
           
@@ -165,7 +195,6 @@ export const useAuth = () => {
           // Message often looks like: "For security reasons/purposes, you can only request this after XX seconds."
           if (errorMessageStr.toLowerCase().includes('for security') ||
               errorMessageStr.toLowerCase().includes('request this after')) {
-            console.warn('⚠️ [useAuth.signUpMutation] Verification recently sent (rate limited). Treating as success.')
             // Treat as success: return the existing data without throwing
             // so the UI can show a success banner instead of an error.
             return data as any
@@ -184,11 +213,8 @@ export const useAuth = () => {
           throw new Error(errorMessage);
         }
         
-        console.log('✅ [useAuth.signUpMutation] Auth signup successful:', data)
-        
         // Create user profile with auth uid to satisfy RLS
         if (data?.user) {
-          console.log('🔍 [useAuth.signUpMutation] Creating user profile...')
           await userApi.createUser({
             id: data.user.id,
             email: userData.email,
@@ -198,25 +224,21 @@ export const useAuth = () => {
             date_of_birth: userData.date_of_birth,
             avatar: userData.avatar
           })
-          console.log('✅ [useAuth.signUpMutation] User profile created')
         }
         
         return data
       } catch (err) {
-        console.error('❌ [useAuth.signUpMutation] Exception:', err)
+        console.error('Sign up exception:', err)
         throw err
       }
     },
     onSuccess: async (data) => {
-      console.log('🔍 [useAuth.signUpMutation] onSuccess called:', data)
       if (data?.user) {
-        console.log('🔍 [useAuth.signUpMutation] Fetching full user profile...')
         try {
           // Fetch full user profile from database
           const fullUser = await userApi.getCurrentUser();
           if (fullUser) {
             setCurrentUser(fullUser);
-            console.log('✅ [useAuth.signUpMutation] Current user set')
           }
         } catch (err) {
           console.error('Failed to fetch user profile:', err);
@@ -224,23 +246,19 @@ export const useAuth = () => {
       }
     },
     onError: (error) => {
-      console.error('❌ [useAuth.signUpMutation] onError:', error)
+      console.error('Sign up error:', error)
       setError(error instanceof Error ? error.message : 'Sign up failed. Please try again.')
     }
   })
 
   const signInMutation = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      console.log('🔍 [useAuth.signInMutation] Starting signin...', { email })
       clearError() // Clear any previous errors
       
       try {
-        console.log('🔍 [useAuth.signInMutation] Calling auth.signIn...')
         const { data, error } = await auth.signIn(email, password)
         
         if (error) {
-          console.error('❌ [useAuth.signInMutation] Auth signin error:', error)
-          
           // Provide user-friendly error messages
           let errorMessage = 'Sign in failed. Please try again.';
           
@@ -257,63 +275,47 @@ export const useAuth = () => {
           throw new Error(errorMessage);
         }
         
-        console.log('✅ [useAuth.signInMutation] Auth signin successful:', data)
         return data
       } catch (err) {
-        console.error('❌ [useAuth.signInMutation] Exception:', err)
+        console.error('Sign in exception:', err)
         throw err
       }
     },
     onSuccess: async (data) => {
-      console.log('🔍 [useAuth.signInMutation] onSuccess called:', data)
+      // Immediately handle sign-in success
       if (data?.user) {
-        console.log('🔍 [useAuth.signInMutation] Fetching full user profile...')
-        try {
-          // Fetch full user profile from database
-          const fullUser = await userApi.getCurrentUser();
-          if (fullUser) {
-            setCurrentUser(fullUser);
-            console.log('✅ [useAuth.signInMutation] Current user set')
-          }
-        } catch (err) {
-          console.error('Failed to fetch user profile:', err);
-        }
+        await ensureUserProfile(data.user, setCurrentUser, setError)
       }
     },
     onError: (error) => {
-      console.error('❌ [useAuth.signInMutation] onError:', error)
+      console.error('Sign in error:', error)
       setError(error instanceof Error ? error.message : 'Sign in failed. Please try again.')
     }
   })
 
   const signOutMutation = useMutation({
     mutationFn: async () => {
-      console.log('🔍 [useAuth.signOutMutation] Starting signout...')
       clearError() // Clear any previous errors
       
       try {
-        console.log('🔍 [useAuth.signOutMutation] Calling auth.signOut...')
         const { error } = await auth.signOut()
         
         if (error) {
-          console.error('❌ [useAuth.signOutMutation] Auth signout error:', error)
+          console.error('Sign out error:', (error as any)?.message || error)
           throw new Error('Sign out failed. Please try again.');
         }
         
-        console.log('✅ [useAuth.signOutMutation] Auth signout successful')
         return true
       } catch (err) {
-        console.error('❌ [useAuth.signOutMutation] Exception:', err)
+        console.error('Sign out exception:', err)
         throw err
       }
     },
     onSuccess: () => {
-      console.log('🔍 [useAuth.signOutMutation] onSuccess called')
       setCurrentUser(null)
-      console.log('✅ [useAuth.signOutMutation] Current user cleared')
     },
     onError: (error) => {
-      console.error('❌ [useAuth.signOutMutation] onError:', error)
+      console.error('Sign out error:', error)
       setError(error instanceof Error ? error.message : 'Sign out failed. Please try again.')
     }
   })

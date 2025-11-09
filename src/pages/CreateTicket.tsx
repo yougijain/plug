@@ -23,7 +23,6 @@ const CreateTicket: React.FC = () => {
   // Redirect if user doesn't have campus_id
   React.useEffect(() => {
     if (currentUser && !currentUser.campus_id) {
-      console.warn('⚠️ [CreateTicket] User missing campus_id, redirecting to profile');
       setError('⚠️ Your account is missing campus information. Please update your profile.');
       navigate('/profile');
     }
@@ -42,12 +41,10 @@ const CreateTicket: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const next = () => {
-    console.log('🔍 [CreateTicket] Moving to next step. Current:', step);
     setStep((s) => (s === 3 ? s : ((s + 1) as any)));
   };
   
   const back = () => {
-    console.log('🔍 [CreateTicket] Back clicked. Current step:', step);
     if (step === 1) {
       // Step 1: Go back to home
       navigate('/');
@@ -72,10 +69,6 @@ const CreateTicket: React.FC = () => {
   }
 
   const submit = async () => {
-    console.log('🔍 [CreateTicket] Submit clicked');
-    console.log('🔍 [CreateTicket] Current user:', currentUser);
-    console.log('🔍 [CreateTicket] Form data:', form);
-    
     if (!currentUser?.id) {
       setError('You must be logged in to create a ticket');
       return;
@@ -99,31 +92,21 @@ const CreateTicket: React.FC = () => {
       return;
     }
     if (!currentUser.campus_id) {
-      console.error('❌ [CreateTicket] User has no campus_id!', currentUser);
       setError('⚠️ Your account is missing campus information. Please sign out and create a new account with your .edu email.');
       return;
     }
 
-    console.log('✅ [CreateTicket] All validations passed');
     clearError();
     
     try {
-      console.log('🔍 [CreateTicket] Starting ticket creation...', {
-        user_id: currentUser.id,
-        campus_id: currentUser.campus_id,
-        title: form.title.trim(),
-        event_name: form.event_name
-      });
-
       // Upload images to storage
       let imageUrls: string[] = []
       try {
         if (selectedFiles.length > 0) {
           imageUrls = await storage.uploadPostImages(selectedFiles, currentUser.id)
-          console.log('✅ [CreateTicket] Images uploaded:', imageUrls.length)
         }
       } catch (upErr) {
-        console.error('❌ [CreateTicket] Image upload failed:', upErr)
+        console.error('Image upload failed:', upErr)
         setError('Image upload failed. Please try again.')
         return
       }
@@ -140,11 +123,8 @@ const CreateTicket: React.FC = () => {
         quantity: parseInt(form.quantity) || 1,
         images: imageUrls,
       };
-
-      console.log('🔍 [CreateTicket] Calling createTicket with data:', ticketData);
       
-      const result = await createTicket(ticketData);
-      console.log('✅ [CreateTicket] Ticket created successfully:', result);
+      await createTicket(ticketData);
       
       // Show success message
       setShowSuccess(true);
