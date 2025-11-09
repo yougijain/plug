@@ -1,4 +1,4 @@
-// Campus Connect - Tickets MVP Types
+// TicketPlug - Types
 import type { Database } from './database'
 
 export type Tables = Database['public']['Tables']

@@ -8,13 +8,83 @@ import {
   CalendarIcon,
   MapPinIcon
 } from '@heroicons/react/24/outline';
+import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
+
+// Example saved tickets for demo
+const EXAMPLE_SAVED_TICKETS: any[] = [
+  {
+    id: 'saved-1',
+    seller_id: 'seller-1',
+    event_id: null,
+    campus_id: 'iu-campus-id',
+    title: '2 Lower Bowl Tickets',
+    description: 'Great seats! Section 112, Row 15. Can meet on campus or transfer digitally.',
+    event_name: 'Purdue vs Indiana Basketball',
+    event_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    event_venue: 'Assembly Hall',
+    price: 85.00,
+    quantity: 2,
+    quantity_sold: 0,
+    status: 'active' as const,
+    images: ['https://images.unsplash.com/photo-1546519638-68e109498ffc?w=400'],
+    views: 42,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    expires_at: null,
+    sold_at: null,
+    users: {
+      name: 'Alex Johnson',
+      reputation_score: 92,
+      successful_sales: 15,
+      avatar: null,
+      university: 'Indiana University',
+      snapchat_handle: null,
+      instagram_handle: null,
+      phone_number: null
+    }
+  },
+  {
+    id: 'saved-2',
+    seller_id: 'seller-2',
+    event_id: null,
+    campus_id: 'iu-campus-id',
+    title: 'Student Section - 4 Tickets',
+    description: 'Selling 4 student section tickets together. Must buy all 4. Great for a group!',
+    event_name: 'IU Homecoming Concert',
+    event_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    event_venue: 'Memorial Stadium',
+    price: 45.00,
+    quantity: 4,
+    quantity_sold: 0,
+    status: 'active' as const,
+    images: ['https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400'],
+    views: 28,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    expires_at: null,
+    sold_at: null,
+    users: {
+      name: 'Sam Martinez',
+      reputation_score: 88,
+      successful_sales: 8,
+      avatar: null,
+      university: 'Indiana University',
+      snapchat_handle: null,
+      instagram_handle: null,
+      phone_number: null
+    }
+  }
+];
 
 const Saved: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { savedTickets, isLoading, unsaveTicket } = useSavedTickets(currentUser?.id);
+  const { savedTickets: apiSavedTickets, isLoading, unsaveTicket } = useSavedTickets(currentUser?.id);
+  
+  // Use example tickets if API returns empty, otherwise use API tickets
+  const savedTickets = (apiSavedTickets && apiSavedTickets.length > 0) ? apiSavedTickets : EXAMPLE_SAVED_TICKETS;
 
   const handleBack = () => {
     navigate('/');
@@ -114,7 +184,7 @@ const Saved: React.FC = () => {
                       className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
                       aria-label="Remove from saved"
                     >
-                      <HeartIcon className="h-6 w-6 fill-current" />
+                      <HeartSolidIcon className="h-6 w-6 text-red-500" />
                     </button>
                   </div>
 
@@ -139,6 +209,19 @@ const Saved: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Seller Info */}
+                  {ticket.users && (
+                    <div className="flex items-center space-x-2 mt-3 pt-3 border-t border-gray-100">
+                      <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                        {ticket.users.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{ticket.users.name}</p>
+                        <p className="text-xs text-gray-500">⭐ {ticket.users.reputation_score} points • {ticket.users.successful_sales} sales</p>
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* Status Badge */}
                   {ticket.status !== 'active' && (
                     <div className="mt-3 pt-3 border-t border-gray-100">
@@ -147,6 +230,17 @@ const Saved: React.FC = () => {
                       </span>
                     </div>
                   )}
+                  
+                  {/* View Details Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/tickets/${ticket.id}`);
+                    }}
+                    className="w-full mt-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-2.5 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md"
+                  >
+                    View Details
+                  </button>
                 </div>
               </motion.div>
             ))}

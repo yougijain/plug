@@ -1,4 +1,4 @@
-// Campus Connect - Tickets MVP Database Types
+// TicketPlug - Database Types
 export type Database = {
   public: {
     Tables: {

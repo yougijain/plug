@@ -15,9 +15,137 @@ import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 
+// Example tickets for demo
+const EXAMPLE_TICKETS: any[] = [
+  {
+    id: 'ticket-1',
+    seller_id: 'seller-1',
+    event_id: null,
+    campus_id: 'iu-campus-id',
+    title: '2 Lower Bowl Tickets',
+    description: 'Great seats! Section 112, Row 15. Can meet on campus or transfer digitally.',
+    event_name: 'Purdue vs Indiana Basketball',
+    event_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    event_venue: 'Assembly Hall',
+    price: 85.00,
+    quantity: 2,
+    quantity_sold: 0,
+    status: 'active' as const,
+    images: ['https://images.unsplash.com/photo-1546519638-68e109498ffc?w=400'],
+    views: 42,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    expires_at: null,
+    sold_at: null,
+    users: {
+      name: 'Alex Johnson',
+      reputation_score: 92,
+      successful_sales: 15,
+      avatar: null,
+      university: 'Indiana University',
+      snapchat_handle: null,
+      instagram_handle: null,
+      phone_number: null
+    }
+  },
+  {
+    id: 'ticket-2',
+    seller_id: 'seller-2',
+    event_id: null,
+    campus_id: 'iu-campus-id',
+    title: 'Student Section - 4 Tickets',
+    description: 'Selling 4 student section tickets together. Must buy all 4. Great for a group!',
+    event_name: 'IU Homecoming Concert',
+    event_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    event_venue: 'Memorial Stadium',
+    price: 45.00,
+    quantity: 4,
+    quantity_sold: 0,
+    status: 'active' as const,
+    images: ['https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400'],
+    views: 28,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    expires_at: null,
+    sold_at: null,
+    users: {
+      name: 'Sam Martinez',
+      reputation_score: 88,
+      successful_sales: 8,
+      avatar: null,
+      university: 'Indiana University',
+      snapchat_handle: null,
+      instagram_handle: null,
+      phone_number: null
+    }
+  },
+  {
+    id: 'ticket-3',
+    seller_id: 'seller-3',
+    event_id: null,
+    campus_id: 'iu-campus-id',
+    title: 'Single Ticket - Center Court',
+    description: 'One ticket, Section 201 center court. Can\'t make it to the game unfortunately.',
+    event_name: 'Indiana vs Michigan State',
+    event_date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+    event_venue: 'Assembly Hall',
+    price: 120.00,
+    quantity: 1,
+    quantity_sold: 0,
+    status: 'active' as const,
+    images: ['https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400'],
+    views: 67,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    expires_at: null,
+    sold_at: null,
+    users: {
+      name: 'Jordan Lee',
+      reputation_score: 95,
+      successful_sales: 22,
+      avatar: null,
+      university: 'Indiana University',
+      snapchat_handle: null,
+      instagram_handle: null,
+      phone_number: null
+    }
+  },
+  {
+    id: 'ticket-4',
+    seller_id: 'seller-4',
+    event_id: null,
+    campus_id: 'iu-campus-id',
+    title: 'Theater Show - 2 Tickets',
+    description: 'Two tickets for the student theater production. Great seats in the middle section.',
+    event_name: 'Spring Theater Showcase',
+    event_date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+    event_venue: 'IU Auditorium',
+    price: 25.00,
+    quantity: 2,
+    quantity_sold: 0,
+    status: 'active' as const,
+    images: ['https://images.unsplash.com/photo-1503095396549-807759245b35?w=400'],
+    views: 15,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    expires_at: null,
+    sold_at: null,
+    users: {
+      name: 'Taylor Chen',
+      reputation_score: 85,
+      successful_sales: 5,
+      avatar: null,
+      university: 'Indiana University',
+      snapchat_handle: null,
+      instagram_handle: null,
+      phone_number: null
+    }
+  }
+];
+
 const Home: React.FC = () => {
   const { currentUser } = useAuth();
-  const { tickets, isLoading } = useTickets({ 
+  const { tickets: apiTickets, isLoading } = useTickets({ 
     campusId: currentUser?.campus_id || undefined,
     status: 'active'
   });
@@ -30,6 +158,9 @@ const Home: React.FC = () => {
   const [hasNotifications] = useState(true);
   const location = useLocation();
   const [toast, setToast] = useState<string | null>(null);
+  
+  // Use example tickets if API returns empty, otherwise use API tickets
+  const tickets = (apiTickets && apiTickets.length > 0) ? apiTickets : EXAMPLE_TICKETS;
 
   // Toast handler for redirects
   useEffect(() => {
@@ -122,7 +253,7 @@ const Home: React.FC = () => {
             </div>
             <div>
               <h1 className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Campus Connect
+                TicketPlug
               </h1>
               <p className="text-xs text-gray-500">{currentUser?.university || 'Loading...'}</p>
             </div>
@@ -329,6 +460,17 @@ const Home: React.FC = () => {
                       </div>
                     </div>
                   )}
+                  
+                  {/* View Details Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/tickets/${ticket.id}`);
+                    }}
+                    className="w-full mt-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-2.5 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md"
+                  >
+                    View Details
+                  </button>
                 </div>
               </motion.div>
             ))}

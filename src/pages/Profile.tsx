@@ -16,7 +16,7 @@ import {
   CheckIcon,
   LinkIcon
 } from '@heroicons/react/24/outline';
-import { SavedEmptyIcon, SellingEmptyIcon, BuyingEmptyIcon } from '../components/SVGIcon';
+import { SellingEmptyIcon, BuyingEmptyIcon } from '../components/SVGIcon';
 // import CategoryPlaceholder from '../components/CategoryPlaceholder';
 import { useTickets } from '../hooks/useTickets';
 import { userApi } from '../lib/api';
@@ -351,9 +351,11 @@ const Profile: React.FC = () => {
               </div>
             ) : (
               <div className="text-center py-12">
-                <SavedEmptyIcon className="h-24 w-24 mx-auto mb-4" />
+                <div className="w-24 h-24 bg-gradient-to-br from-red-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <HeartIcon className="h-12 w-12 text-red-500" />
+                </div>
                 <h3 className="text-lg font-bold text-[#0E1F33] mb-2">Nothing saved yet 👀</h3>
-                <p className="text-gray-600 mb-6">Start saving items you love to find them later</p>
+                <p className="text-gray-600 mb-6">Start saving tickets you love to find them later</p>
                 <div className="space-y-3">
                   <button 
                     onClick={handleFindDeals}

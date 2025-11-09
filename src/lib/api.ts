@@ -1,4 +1,4 @@
-// Campus Connect API
+// TicketPlug API
 import { supabase } from './supabase'
 import type { Campus, User, Ticket, Event, Report, TicketInsert, ReportInsert, EventInsert } from '../types'
 

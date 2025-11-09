@@ -28,7 +28,7 @@ const signUpSchema = z.object({
         return age - 1 >= 17;
       }
       return age >= 17;
-    }, { message: 'You must be at least 17 years old to use Campus Connect' }),
+    }, { message: 'You must be at least 17 years old to use TicketPlug' }),
   agreeTerms: z.boolean().refine((val) => val === true, {
     message: 'You must agree to the Terms and Privacy Policy'
   })
@@ -153,9 +153,9 @@ const Login: React.FC = () => {
             <span className="text-3xl">🎟️</span>
           </div>
           <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
-            Campus Connect
+            TicketPlug
           </h1>
-          <p className="text-gray-600">Buy and sell tickets on your campus</p>
+          <p className="text-gray-600">Your campus ticket marketplace</p>
         </div>
 
         {error && (
@@ -445,8 +445,8 @@ const Login: React.FC = () => {
         <div className="mt-6 pt-6 border-t border-gray-200 text-center">
           <p className="text-xs text-gray-500">
             Questions? Email{' '}
-            <a href="mailto:support@campusconnect.app" className="text-indigo-600 hover:underline">
-              support@campusconnect.app
+              <a href="mailto:support@ticketplug.app" className="text-indigo-600 hover:underline">
+              support@ticketplug.app
             </a>
           </p>
         </div>
