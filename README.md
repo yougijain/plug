@@ -1,87 +1,56 @@
-# Loop - University Marketplace App
+# Plug — Campus Ticket Marketplace
 
-A modern, mobile-first marketplace app for university students to buy, sell, and trade items, services, and rides.
+Plug is a campus-only ticket marketplace for students to buy and sell event tickets safely. The web app is built with React, TypeScript, Tailwind, and Supabase; an Expo-based mobile app starter lives in `ticketplug-mobile/` and reuses the same types, store, and API layer.
 
-## 🎨 Color Palette
+## Highlights
+- **Campus-gated auth**: .edu email sign-up, email verification, and protected routes.
+- **Ticket flows**: Create listings, browse/search/filter, view details with seller reputation, and save/unsave.
+- **Supabase backend**: Typed queries via `src/lib/api.ts` using the shared `Database` types in `src/types/database.ts`.
+- **State & data**: Zustand for auth/session state and React Query for API caching.
+- **Demo-friendly**: Falls back to demo data if Supabase env vars are missing so the UI is always explorable.
+- **Mobile path**: Expo/React Native starter (`ticketplug-mobile/`) with navigation scaffold ready to wire into the shared logic.
 
-The app uses a carefully designed color palette built around blue and orange with neutral tones:
+## Current State
+- Web app routes are protected; the login page is the entry. Home, Saved, Create Ticket, Ticket Detail, and Profile screens are built with mobile-first styling.
+- Supabase API coverage includes campuses, users, events, tickets, saved tickets, and reports. Mark-sold/delete/update endpoints exist; edit/delete UI is still light.
+- Demo data powers the experience without env vars; real backend flows need a Supabase project + storage bucket configured.
+- React Testing Library unit tests and Playwright e2e specs exist; they need a configured backend to be meaningful.
+- Mobile app currently shows a minimal screen plus navigation scaffolding; screens mirror the web pages but still need implementation.
 
-| Color | Hex | Usage | Purpose |
-|-------|-----|-------|---------|
-| ⚪️ Light Neutral | #F7F7F7 | 60% | Page backgrounds |
-| 🖤 Dark Neutral | #333333 | - | Text/Iconography |
-| 🔵 Primary Blue | #1678F2 | 25% | Header/nav, cards |
-| 🌐 Light Blue | #56A9FF | 5% | Secondary buttons, links |
-| 🟠 Accent Orange | #FF8200 | 7% | Primary CTAs, badges |
-| 🟡 Light Orange | #FFC273 | 3% | Hover/pressed states |
+## Next Steps (resume/public-ready)
+- Wire Supabase end-to-end: set env vars, run migrations in `supabase/migrations/`, and verify auth + ticket CRUD + saved tickets against a real project.
+- Add production polish: loading/error/empty states across all screens, image upload to Supabase Storage, and mark-sold/edit/delete flows in the UI.
+- Strengthen trust & safety: ensure RLS policies are enabled, seed campuses, and add better form validation/error copy.
+- Ship-proof documentation: screenshots or a short Loom, deployment notes (Vercel/Netlify), and a concise “What works today” section.
+- Testing & quality: run the existing Jest/RTL and Playwright suites, add CI checks, and keep secrets out of commits.
+- Mobile: connect the Expo app to the shared API/store, implement screens, and test on iOS/Android simulators.
 
-## 🚀 Features
-
-- **Authentication**: Secure sign-up/sign-in with Supabase
-- **Posts**: Create and browse marketplace posts
-- **Search & Filter**: Find items by category and keywords
-- **Real-time Updates**: Live updates using Supabase subscriptions
-- **Mobile-First Design**: Optimized for mobile devices
-- **Demo Mode**: Works without database connection
-
-## 🛠 Tech Stack
-
-- **Frontend**: React 18, TypeScript, Tailwind CSS
-- **Backend**: Supabase (PostgreSQL, Auth, Real-time)
-- **State Management**: Zustand, React Query
-- **Forms**: React Hook Form with Zod validation
-- **Icons**: Heroicons, Lucide React
-
-## 📱 Pages
-
-- **Home**: Browse and create posts
-- **Explore**: Search and filter posts
-- **Cruze**: Ride sharing functionality
-- **Live Now**: Real-time activity feed
-- **Messages**: Chat with other users
-- **Login**: Authentication
-
-## 🎯 Design Principles
-
-- **60-30-10 Rule**: Neutrals (60%), Blue (30%), Orange (10%)
-- **Complementary Harmony**: Blue (trust) vs Orange (action)
-- **Accessible**: All text meets ≥4.5:1 contrast ratio
-- **Mobile-First**: Optimized for mobile devices
-
-## 🚀 Getting Started
-
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Set up environment variables (see below)
-4. Test database connectivity: `npm run db:test`
-5. Start development server: `npm start`
-
-### Environment variables
-
-Create a `.env` file in the project root with:
-
+## Getting Started (Web)
+1) Install: `npm install`  
+2) Env: create `.env` with  
 ```
 REACT_APP_SUPABASE_URL=your_supabase_project_url
 REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
-
-Optional (for admin scripts only; never expose in client builds):
-
+Optional (server-side tooling only, never ship to client builds):
 ```
-# Only for server-side tooling if needed
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
+3) Check DB connectivity: `npm run db:test`  
+4) Start dev server: `npm start`
 
-The app supports a demo mode. If the environment variables are missing, it falls back to in-memory/demo data so you can still explore the UI.
+## Getting Started (Mobile)
+1) `cd ticketplug-mobile`  
+2) `npm install`  
+3) Add matching Supabase env (e.g., via `app.config.js` or `app.json` extras)  
+4) `npx expo start` (use iOS/Android simulator or Expo Go)
 
-## 🧹 Recent Cleanup
+## Project Structure
+- `src/` — React web app (pages, components, hooks, Zustand store, Supabase API, types)
+- `ticketplug-mobile/` — Expo/React Native starter with navigation and shared logic ready to plug in
+- `supabase/` — SQL migrations and schema
+- `tests/` and `src/__tests__/` — Playwright e2e and Jest/RTL unit tests
+- Docs: `MVP_FEATURES.md`, `PRODUCTION_READY_CHECKLIST.md`, `FIX_AND_PUBLISH_PLAN.md`, `MOBILE_FIRST_ARCHITECTURE.md`
 
-- Removed unnecessary SQL test files
-- Cleaned up test documentation
-- Updated color palette to blue/orange theme
-- Simplified file structure
-- Improved code organization
-
-## 📄 License
-
-MIT License 
+## License
+MIT License
