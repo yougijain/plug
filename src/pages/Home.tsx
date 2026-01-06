@@ -159,8 +159,10 @@ const Home: React.FC = () => {
   const location = useLocation();
   const [toast, setToast] = useState<string | null>(null);
   
-  // Use example tickets if API returns empty, otherwise use API tickets
-  const tickets = (apiTickets && apiTickets.length > 0) ? apiTickets : EXAMPLE_TICKETS;
+  // Use API tickets, fallback to examples only in development
+  const tickets = (apiTickets && apiTickets.length > 0) 
+    ? apiTickets 
+    : (process.env.NODE_ENV === 'development' ? EXAMPLE_TICKETS : []);
 
   // Toast handler for redirects
   useEffect(() => {

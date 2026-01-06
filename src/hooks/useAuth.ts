@@ -163,12 +163,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useAuth = () => {
-  const { currentUser: contextUser, isLoading } = useContext(AuthContext);
-  const { currentUser: storeUser, setCurrentUser } = useAppStore();
-  const { setError, clearError } = useAppStore();
-  
-  // Use store user if available (for mock user), otherwise use context user
-  const currentUser = storeUser || contextUser;
+  const { currentUser, isLoading } = useContext(AuthContext);
+  const { setCurrentUser, setError, clearError } = useAppStore();
 
   const signUpMutation = useMutation({
     mutationFn: async ({ email, password, userData }: {

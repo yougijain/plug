@@ -83,8 +83,10 @@ const Saved: React.FC = () => {
   const { currentUser } = useAuth();
   const { savedTickets: apiSavedTickets, isLoading, unsaveTicket } = useSavedTickets(currentUser?.id);
   
-  // Use example tickets if API returns empty, otherwise use API tickets
-  const savedTickets = (apiSavedTickets && apiSavedTickets.length > 0) ? apiSavedTickets : EXAMPLE_SAVED_TICKETS;
+  // Use API tickets, fallback to examples only in development
+  const savedTickets = (apiSavedTickets && apiSavedTickets.length > 0) 
+    ? apiSavedTickets 
+    : (process.env.NODE_ENV === 'development' ? EXAMPLE_SAVED_TICKETS : []);
 
   const handleBack = () => {
     navigate('/');
