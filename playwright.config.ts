@@ -9,6 +9,7 @@ import { defineConfig, devices } from '@playwright/test';
  *   local server is started in that case.
  * - Set PLAYWRIGHT_CHROMIUM_PATH when Chromium is provided by the environment
  *   rather than by `npx playwright install`.
+ * - Set E2E_IGNORE_HTTPS_ERRORS=1 behind a TLS-intercepting proxy.
  */
 
 const baseURL = process.env.E2E_BASE_URL || 'http://localhost:3000';
@@ -20,6 +21,7 @@ export default defineConfig({
   retries: 0,
   use: {
     baseURL,
+    ignoreHTTPSErrors: process.env.E2E_IGNORE_HTTPS_ERRORS === '1',
     trace: 'on-first-retry',
     video: 'retain-on-failure',
     launchOptions: process.env.PLAYWRIGHT_CHROMIUM_PATH
