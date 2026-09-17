@@ -5,14 +5,26 @@ import { MemoryRouter } from 'react-router-dom';
 import { usePosts } from '../hooks/usePosts';
 
 jest.mock('../lib/api', () => ({
-  postsApi: {
-    create: jest.fn(async (data) => ({ ...data, id: 'new-id', created_at: new Date().toISOString() })),
-    getAll: jest.fn(async () => []),
-  },
+  postsApi: { create: jest.fn(), getAll: jest.fn() },
 }));
 
+// CRA's Jest config runs with resetMocks, which strips implementations given to
+// jest.fn() at module scope. Install them per test instead.
+beforeEach(() => {
+  const { postsApi } = jest.requireMock('../lib/api');
+  postsApi.getAll.mockResolvedValue([]);
+  postsApi.create.mockImplementation(async (data: any) => ({
+    ...data,
+    id: 'new-id',
+    created_at: new Date().toISOString(),
+  }));
+});
+
+// One client for the whole test: constructing it inside the wrapper would hand
+// every re-render a fresh, empty cache and the assertion would read from it.
+const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
 function wrapper({ children }: { children: React.ReactNode }) {
-  const qc = new QueryClient();
   return (
     <MemoryRouter>
       <QueryClientProvider client={qc}>{children}</QueryClientProvider>

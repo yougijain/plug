@@ -10,6 +10,7 @@ import {
   CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
+import { log } from '../lib/logger'
 
 const Post: React.FC = () => {
   const { currentUser } = useAuth();
@@ -84,7 +85,7 @@ const Post: React.FC = () => {
     clearError();
     
     try {
-      console.log('🔍 [Post] Starting post creation...', {
+      log('🔍 [Post] Starting post creation...', {
         user_id: currentUser.id,
         title: form.title.trim(),
         category: form.category,
@@ -126,11 +127,11 @@ const Post: React.FC = () => {
         expires_at: form.expires_at ? new Date(`${form.expires_at}T23:59:59`).toISOString() : undefined,
       };
 
-      console.log('🔍 [Post] Calling createPost with data:', postData);
+      log('🔍 [Post] Calling createPost with data:', postData);
       
       const result = await createPost(postData);
       
-      console.log('✅ [Post] Post created successfully:', result);
+      log('✅ [Post] Post created successfully:', result);
       
       // Show success message
       setShowSuccess(true);
@@ -321,10 +322,11 @@ const Post: React.FC = () => {
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-[#0E1F33] mb-2">
+                <label htmlFor="post-title" className="block text-sm font-semibold text-[#0E1F33] mb-2">
                   Title <span className="text-red-500">*</span>
                 </label>
-                <input 
+                <input
+                  id="post-title" 
                   className="w-full h-12 px-4 border border-[#E6E9EE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent"
                   placeholder="What are you selling?"
                   value={form.title} 
@@ -333,10 +335,11 @@ const Post: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-[#0E1F33] mb-2">
+                <label htmlFor="post-description" className="block text-sm font-semibold text-[#0E1F33] mb-2">
                   Description <span className="text-red-500">*</span>
                 </label>
-                <textarea 
+                <textarea
+                  id="post-description" 
                   className="w-full h-24 px-4 py-3 border border-[#E6E9EE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent resize-none"
                   placeholder="Describe your item, condition, etc."
                   value={form.description} 
@@ -345,8 +348,9 @@ const Post: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-[#0E1F33] mb-2">Price</label>
-                <input 
+                <label htmlFor="post-price" className="block text-sm font-semibold text-[#0E1F33] mb-2">Price</label>
+                <input
+                  id="post-price"
                   type="text"
                   inputMode="decimal"
                   className="w-full h-12 px-4 border border-[#E6E9EE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent"
@@ -358,8 +362,9 @@ const Post: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-[#0E1F33] mb-2">Expiry Date</label>
+                <label htmlFor="post-expiry" className="block text-sm font-semibold text-[#0E1F33] mb-2">Expiry Date</label>
                 <input
+                  id="post-expiry"
                   type="date"
                   className="w-full h-12 px-4 border border-[#E6E9EE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent"
                   value={form.expires_at}
@@ -369,10 +374,11 @@ const Post: React.FC = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-[#0E1F33] mb-2">
+                <label htmlFor="post-location" className="block text-sm font-semibold text-[#0E1F33] mb-2">
                   Location <span className="text-red-500">*</span>
                 </label>
-                <input 
+                <input
+                  id="post-location" 
                   className="w-full h-12 px-4 border border-[#E6E9EE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent"
                   placeholder="Where can buyers pick up?"
                   value={form.location} 
@@ -396,8 +402,9 @@ const Post: React.FC = () => {
                 {form.is_flash_deal && (
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-semibold text-[#0E1F33] mb-2">Live Duration</label>
+                      <label htmlFor="post-live-duration" className="block text-sm font-semibold text-[#0E1F33] mb-2">Live Duration</label>
                       <select
+                        id="post-live-duration"
                         className="w-full h-12 px-3 border border-[#E6E9EE] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B35] focus:border-transparent"
                         value={liveDuration}
                         onChange={(e) => setLiveDuration(e.target.value as any)}

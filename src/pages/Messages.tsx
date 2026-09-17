@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useConversations, useMessages } from '../hooks/useMessages';
+import { useUserDirectory } from '../hooks/useUsers';
 import { Conversation, Message } from '../types/index';
 import { 
   PaperAirplaneIcon, 
@@ -14,6 +15,7 @@ import {
   ArrowDownIcon
 } from '@heroicons/react/24/outline';
 import { NoMessagesIcon } from '../components/SVGIcon';
+import { log } from '../lib/logger'
 
 // Extended conversation type for demo data
 interface DemoConversation extends Conversation {
@@ -70,11 +72,12 @@ const Messages: React.FC = () => {
       ];
     }
     // Convert real conversations to demo format with default listing info
+    // Keep whatever listing context the backend supplied; fall back only when absent.
     return conversations.map(conv => ({
       ...conv,
-      listing_title: 'Listing', // Default value for real conversations
-      listing_price: 0, // Default value for real conversations
-      listing_image: null // Default value for real conversations
+      listing_title: conv.listing_title ?? 'Listing',
+      listing_price: conv.listing_price ?? 0,
+      listing_image: conv.listing_image ?? null
     }));
   }, [conversations, currentUser?.id]);
 
@@ -145,6 +148,11 @@ const Messages: React.FC = () => {
     });
   }, [demoConversations, demoMessages, currentUser?.id]);
 
+  // Conversations carry participant ids only, so look up the people behind them.
+  const { nameFor, universityFor } = useUserDirectory(
+    conversationsWithLastMessage.map((conversation) => conversation.otherParticipant)
+  );
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -172,13 +180,13 @@ const Messages: React.FC = () => {
   }, [selectedConversation]);
 
   const handleConversationSelect = (conversationId: string) => {
-    console.log('🔍 [Messages] Selecting conversation:', conversationId);
+    log('🔍 [Messages] Selecting conversation:', conversationId);
     setSelectedConversation(conversationId);
     setMessageText(''); // Clear message input when switching conversations
   };
 
   const handleBackToConversations = () => {
-    console.log('🔍 [Messages] Going back to conversations list');
+    log('🔍 [Messages] Going back to conversations list');
     setSelectedConversation(null);
     setMessageText(''); // Clear message input
   };
@@ -283,7 +291,7 @@ const Messages: React.FC = () => {
                   <div className="flex-1 min-w-0 overflow-hidden">
                     <div className="flex items-center justify-between mb-1">
                       <p className="text-[15px] font-bold text-[#0E1F33] truncate">
-                        User {conversation.otherParticipant}
+                        {nameFor(conversation.otherParticipant)}
                       </p>
                       <span className="text-[12px] text-gray-500 flex-shrink-0 ml-2">
                         {formatTime(conversation.lastTime)}
@@ -338,9 +346,11 @@ const Messages: React.FC = () => {
           </div>
           <div>
             <p className="text-[16px] font-bold leading-tight">
-              User {selectedConvData?.otherParticipant}
+              {nameFor(selectedConvData?.otherParticipant)}
             </p>
-            <p className="text-[12px] text-[#D8E1EE]">Active now</p>
+            <p className="text-[12px] text-[#D8E1EE]">
+              {universityFor(selectedConvData?.otherParticipant) || 'Verified student'}
+            </p>
           </div>
         </div>
         <button 
@@ -354,13 +364,21 @@ const Messages: React.FC = () => {
       {/* Pinned Listing Bar */}
       {selectedConvData && (
         <div className="px-4 pt-3">
-          <div className="bg-white rounded-xl border border-[#E6E9EE] shadow-lg p-3 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="h-12 w-12 bg-[#F5F7FA] rounded-lg flex items-center justify-center">
-                <span className="text-xs text-gray-500">📱</span>
-              </div>
-              <div>
-                <p className="text-[14px] font-semibold text-[#0E1F33]">
+          <div className="bg-white rounded-xl border border-[#E6E9EE] shadow-lg p-3 flex items-center justify-between gap-3">
+            <div className="flex items-center space-x-3 min-w-0">
+              {selectedConvData.listing_image ? (
+                <img
+                  src={selectedConvData.listing_image}
+                  alt=""
+                  className="h-12 w-12 rounded-lg object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="h-12 w-12 bg-[#F5F7FA] rounded-lg flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs text-gray-500">📱</span>
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-[14px] font-semibold text-[#0E1F33] truncate">
                   {selectedConvData.listing_title}
                 </p>
                 <p className="text-[14px] font-bold text-[#0E1F33]">
@@ -368,12 +386,12 @@ const Messages: React.FC = () => {
                 </p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <button className="h-9 px-3 rounded-lg border border-[#E6E9EE] text-[#0E1F33] text-sm font-semibold hover:bg-gray-50 transition-colors">
-                Make offer
+            <div className="flex items-center space-x-2 flex-shrink-0">
+              <button className="h-9 px-3 rounded-lg border border-[#E6E9EE] text-[#0E1F33] text-sm font-semibold whitespace-nowrap hover:bg-gray-50 transition-colors">
+                Offer
               </button>
-              <button className="h-9 px-3 rounded-lg bg-[#FF6B35] text-white text-sm font-semibold hover:brightness-110 transition-colors">
-                Mark as sold
+              <button className="h-9 px-3 rounded-lg bg-[#FF6B35] text-white text-sm font-semibold whitespace-nowrap hover:brightness-110 transition-colors">
+                Mark sold
               </button>
             </div>
           </div>
@@ -452,6 +470,7 @@ const Messages: React.FC = () => {
           <button
             onClick={handleSendMessage}
             disabled={!messageText.trim()}
+            aria-label="Send message"
             className={`h-9 w-9 rounded-full flex items-center justify-center transition-colors ${
               messageText.trim() 
                 ? 'bg-[#FF6B35] text-white hover:brightness-110' 
@@ -467,6 +486,7 @@ const Messages: React.FC = () => {
       {showScrollToBottom && (
         <button
           onClick={scrollToBottom}
+          aria-label="Scroll to latest message"
           className="fixed bottom-20 right-4 w-12 h-12 bg-[#FF6B35] text-white rounded-full shadow-lg flex items-center justify-center hover:brightness-110 transition-all z-40"
         >
           <ArrowDownIcon className="h-5 w-5" />

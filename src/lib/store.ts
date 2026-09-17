@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { User, Post } from '../types'
+import { log } from './logger'
 
 interface AppState {
   currentUser: User | null
@@ -26,12 +27,12 @@ export const useAppStore = create<AppState>((set) => ({
   savedPosts: [],
   cart: [],
   setCurrentUser: (user) => {
-    console.log('🔍 [store] setCurrentUser called with:', user)
+    log('[store] setCurrentUser called with:', user)
     set({ currentUser: user })
   },
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => {
-    console.log('🔍 [store] setError called with:', error)
+    log('[store] setError called with:', error)
     set({ error })
   },
   clearError: () => set({ error: null }),

@@ -51,7 +51,8 @@ export interface Conversation {
   unread_count: number;
   created_at: string;
   updated_at: string;
-  // Listing information for the conversation
+  // View-model extras: the conversations table stores only participants and
+  // counters, so a backend adapter joins the listing a thread is about.
   listing_title?: string;
   listing_price?: number;
   listing_image?: string | null;
