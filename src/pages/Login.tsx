@@ -6,6 +6,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
 import { useAppStore } from '../lib/store';
 import TwoFactorAuth from '../components/TwoFactorAuth';
+import { auth } from '../lib/supabase';
+import { isDemoMode } from '../lib/env';
+import { LogoIcon } from '../components/SVGIcon';
+import { log } from '../lib/logger'
 
 const ALLOWED_UNIVERSITIES = ['Purdue University', 'Indiana University'] as const;
 
@@ -37,8 +41,31 @@ const Login: React.FC = () => {
   const [isVerifying2FA, setIsVerifying2FA] = useState(false);
   const [isResending2FA, setIsResending2FA] = useState(false);
   const [twoFAError, setTwoFAError] = useState('');
+  const [isEnteringDemo, setIsEnteringDemo] = useState(false);
   const { signUp, signIn, isSigningUp, isSigningIn } = useAuth();
-  const { error, clearError } = useAppStore();
+  const { error, clearError, setCurrentUser } = useAppStore();
+
+  // Demo mode: skip the sign-up wall entirely so the deployed app is explorable.
+  const handleEnterDemo = async () => {
+    clearError();
+    setIsEnteringDemo(true);
+    try {
+      const { data, error: demoError } = await auth.enterDemo();
+      if (demoError || !data?.user) throw new Error(demoError?.message || 'Could not start the demo.');
+      const user = data.user;
+      setCurrentUser({
+        id: user.id,
+        email: user.email || '',
+        name: user.user_metadata?.name || 'Demo Student',
+        university: user.user_metadata?.university || '',
+        avatar: user.user_metadata?.avatar,
+        verified: true,
+      });
+    } catch (err) {
+      log('[Login] demo entry failed:', err);
+      setIsEnteringDemo(false);
+    }
+  };
 
   const signUpForm = useForm<SignUpForm>({
     resolver: zodResolver(signUpSchema),
@@ -53,7 +80,7 @@ const Login: React.FC = () => {
     // no-op
     
     try {
-      console.log('🔍 [Login] Starting sign up process...', { email: data.email, university: data.university });
+      log('🔍 [Login] Starting sign up process...', { email: data.email, university: data.university });
       
       await signUp({
         email: data.email,
@@ -66,7 +93,7 @@ const Login: React.FC = () => {
         },
       });
       
-      console.log('✅ [Login] Sign up successful!');
+      log('✅ [Login] Sign up successful!');
       // Even if Supabase rate-limited a resend, we consider it success and show the banner
       // show implicit success by switching modes after delay
       
@@ -97,14 +124,14 @@ const Login: React.FC = () => {
     clearError();
     
     try {
-      console.log('🔍 [Login] Starting sign in process...', { email: data.email });
+      log('🔍 [Login] Starting sign in process...', { email: data.email });
       
       await signIn({
         email: data.email,
         password: data.password,
       });
       
-      console.log('✅ [Login] Sign in successful!');
+      log('✅ [Login] Sign in successful!');
       
     } catch (err) {
       console.error('❌ [Login] Sign in failed:', err);
@@ -126,14 +153,14 @@ const Login: React.FC = () => {
     try {
       // Here you would typically call your 2FA verification API
       // For now, we'll simulate the verification
-      console.log('🔍 [Login] Verifying 2FA code:', code);
+      log('🔍 [Login] Verifying 2FA code:', code);
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // For demo purposes, accept any 6-digit code
       if (code.length === 6) {
-        console.log('✅ [Login] 2FA verification successful!');
+        log('✅ [Login] 2FA verification successful!');
         setShow2FA(false);
         // Continue with sign in process
       } else {
@@ -153,12 +180,12 @@ const Login: React.FC = () => {
     
     try {
       // Here you would typically call your resend verification API
-      console.log('🔍 [Login] Resending 2FA code to:', pendingEmail);
+      log('🔍 [Login] Resending 2FA code to:', pendingEmail);
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      console.log('✅ [Login] 2FA code resent successfully!');
+      log('✅ [Login] 2FA code resent successfully!');
     } catch (err) {
       console.error('❌ [Login] Failed to resend 2FA code:', err);
       setTwoFAError('Failed to resend code. Please try again.');
@@ -212,9 +239,45 @@ const Login: React.FC = () => {
           className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8"
         >
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-dark-900 mb-2">Welcome to Loop</h1>
-            <p className="text-dark-600">Connect with your university community</p>
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0E1F33]">
+              <LogoIcon className="h-8 w-8" />
+            </div>
+            <h1 className="text-3xl font-bold text-dark-900 mb-2">Welcome to Plug</h1>
+            <p className="text-dark-600">Buy and sell with verified students on your campus</p>
           </div>
+
+          {isDemoMode && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15, duration: 0.4 }}
+              className="mb-6 rounded-xl border border-[#FFD8C4] bg-[#FFF6F1] p-4"
+            >
+              <p className="text-sm font-semibold text-[#0E1F33]">Just looking around?</p>
+              <p className="mt-1 text-xs leading-relaxed text-[#6B7A8C]">
+                Enter as a demo student with a seeded campus feed — no email, no password.
+              </p>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleEnterDemo}
+                disabled={isEnteringDemo}
+                className="mt-3 flex w-full items-center justify-center rounded-lg bg-[#FF6B35] py-3 font-semibold text-white transition-colors hover:brightness-110 disabled:opacity-60"
+              >
+                {isEnteringDemo ? (
+                  <>
+                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white" />
+                    Opening demo...
+                  </>
+                ) : (
+                  'Explore the demo'
+                )}
+              </motion.button>
+              <p className="mt-3 text-center text-[11px] text-[#9AA5B1]">
+                or sign in below — in demo mode any .edu address works
+              </p>
+            </motion.div>
+          )}
 
           {error && (
             <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">

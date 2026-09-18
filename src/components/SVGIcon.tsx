@@ -18,7 +18,7 @@ export const SVGIcon: React.FC<SVGIconProps> = ({
   const getIconPath = (iconName: string) => {
     // Map icon names to their file paths
     const iconMap: Record<string, string> = {
-      'logo': '/assets/images/logo.png',
+      'logo': '/assets/images/logo.svg',
       'notification-badge': '/assets/icons/notification-badge.svg',
       'loading-spinner': '/assets/icons/loading-spinner.svg',
       'empty-state': '/assets/illustrations/home_no_posts.svg',

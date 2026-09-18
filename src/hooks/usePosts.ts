@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { postsApi } from '../lib/api'
 import type { Post } from '../types'
+import { log } from '../lib/logger'
 
 export const usePosts = (filters?: {
   type?: string
@@ -11,20 +12,20 @@ export const usePosts = (filters?: {
 }) => {
   const queryClient = useQueryClient()
 
-  console.log('🔍 [usePosts] Hook called with filters:', filters)
+  log('[usePosts] Hook called with filters:', filters)
 
   const { data: posts, isLoading, error } = useQuery({
     queryKey: ['posts', filters],
     queryFn: async () => {
-      console.log('🔍 [usePosts] Query function called with filters:', filters)
+      log('[usePosts] Query function called with filters:', filters)
       
       try {
-        console.log('🔍 [usePosts] Calling postsApi.getAll...')
+        log('[usePosts] Calling postsApi.getAll...')
         const data = await postsApi.getAll(filters)
-        console.log('✅ [usePosts] Query successful, got', data?.length || 0, 'posts')
+        log('[usePosts] Query successful, got', data?.length || 0, 'posts')
         return data
       } catch (err) {
-        console.error('❌ [usePosts] Query error:', err)
+        console.error('[usePosts] Query error:', err)
         throw err
       }
     }
@@ -32,10 +33,10 @@ export const usePosts = (filters?: {
 
   const createPostMutation = useMutation({
     mutationFn: async (postData: Omit<Post, 'id' | 'created_at'>) => {
-      console.log('🔍 [usePosts.createPostMutation] Starting...', postData)
+      log('[usePosts.createPostMutation] Starting...', postData)
       
       try {
-        console.log('🔍 [usePosts.createPostMutation] Calling postsApi.create...')
+        log('[usePosts.createPostMutation] Calling postsApi.create...')
         const result = await postsApi.create({
           user_id: postData.user_id,
           type: postData.type,
@@ -51,15 +52,15 @@ export const usePosts = (filters?: {
           is_flash_deal: postData.is_flash_deal,
           flash_deal_expires_at: postData.flash_deal_expires_at
         })
-        console.log('✅ [usePosts.createPostMutation] Success:', result)
+        log('[usePosts.createPostMutation] Success:', result)
         return result
       } catch (err) {
-        console.error('❌ [usePosts.createPostMutation] Exception:', err)
+        console.error('[usePosts.createPostMutation] Exception:', err)
         throw err
       }
     },
     onSuccess: (newPost) => {
-      console.log('🔍 [usePosts.createPostMutation] onSuccess called:', newPost)
+      log('[usePosts.createPostMutation] onSuccess called:', newPost)
       // Optimistically update any cached posts lists
       queryClient.setQueriesData({ queryKey: ['posts'] }, (old: any) => {
         // old is array of posts or undefined
@@ -81,59 +82,59 @@ export const usePosts = (filters?: {
       })
       // Finally, invalidate to ensure consistency with server
       queryClient.invalidateQueries({ queryKey: ['posts'] })
-      console.log('✅ [usePosts.createPostMutation] Posts cache updated and invalidated')
+      log('[usePosts.createPostMutation] Posts cache updated and invalidated')
     },
     onError: (error) => {
-      console.error('❌ [usePosts.createPostMutation] onError:', error)
+      console.error('[usePosts.createPostMutation] onError:', error)
     }
   })
 
   const updatePostMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Post> }) => {
-      console.log('🔍 [usePosts.updatePostMutation] Starting...', { id, updates })
+      log('[usePosts.updatePostMutation] Starting...', { id, updates })
       
       try {
-        console.log('🔍 [usePosts.updatePostMutation] Calling postsApi.update...')
+        log('[usePosts.updatePostMutation] Calling postsApi.update...')
         const result = await postsApi.update(id, updates)
-        console.log('✅ [usePosts.updatePostMutation] Success:', result)
+        log('[usePosts.updatePostMutation] Success:', result)
         return result
       } catch (err) {
-        console.error('❌ [usePosts.updatePostMutation] Exception:', err)
+        console.error('[usePosts.updatePostMutation] Exception:', err)
         throw err
       }
     },
     onSuccess: (updatedPost) => {
-      console.log('🔍 [usePosts.updatePostMutation] onSuccess called:', updatedPost)
-      console.log('🔍 [usePosts.updatePostMutation] Invalidating posts query...')
+      log('[usePosts.updatePostMutation] onSuccess called:', updatedPost)
+      log('[usePosts.updatePostMutation] Invalidating posts query...')
       queryClient.invalidateQueries({ queryKey: ['posts'] })
-      console.log('✅ [usePosts.updatePostMutation] Posts query invalidated')
+      log('[usePosts.updatePostMutation] Posts query invalidated')
     },
     onError: (error) => {
-      console.error('❌ [usePosts.updatePostMutation] onError:', error)
+      console.error('[usePosts.updatePostMutation] onError:', error)
     }
   })
 
   const deletePostMutation = useMutation({
     mutationFn: async (id: string) => {
-      console.log('🔍 [usePosts.deletePostMutation] Starting...', { id })
+      log('[usePosts.deletePostMutation] Starting...', { id })
       
       try {
-        console.log('🔍 [usePosts.deletePostMutation] Calling postsApi.delete...')
+        log('[usePosts.deletePostMutation] Calling postsApi.delete...')
         await postsApi.delete(id)
-        console.log('✅ [usePosts.deletePostMutation] Success')
+        log('[usePosts.deletePostMutation] Success')
       } catch (err) {
-        console.error('❌ [usePosts.deletePostMutation] Exception:', err)
+        console.error('[usePosts.deletePostMutation] Exception:', err)
         throw err
       }
     },
     onSuccess: () => {
-      console.log('🔍 [usePosts.deletePostMutation] onSuccess called')
-      console.log('🔍 [usePosts.deletePostMutation] Invalidating posts query...')
+      log('[usePosts.deletePostMutation] onSuccess called')
+      log('[usePosts.deletePostMutation] Invalidating posts query...')
       queryClient.invalidateQueries({ queryKey: ['posts'] })
-      console.log('✅ [usePosts.deletePostMutation] Posts query invalidated')
+      log('[usePosts.deletePostMutation] Posts query invalidated')
     },
     onError: (error) => {
-      console.error('❌ [usePosts.deletePostMutation] onError:', error)
+      console.error('[usePosts.deletePostMutation] onError:', error)
     }
   })
 
@@ -154,15 +155,15 @@ export const usePost = (id: string) => {
   const { data: post, isLoading, error } = useQuery({
     queryKey: ['post', id],
     queryFn: async () => {
-      console.log('🔍 [usePost] Query function called with id:', id)
+      log('[usePost] Query function called with id:', id)
       
       try {
-        console.log('🔍 [usePost] Calling postsApi.getById...')
+        log('[usePost] Calling postsApi.getById...')
         const data = await postsApi.getById(id)
-        console.log('✅ [usePost] Query successful:', data)
+        log('[usePost] Query successful:', data)
         return data
       } catch (err) {
-        console.error('❌ [usePost] Query error:', err)
+        console.error('[usePost] Query error:', err)
         throw err
       }
     },

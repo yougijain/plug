@@ -1,219 +1,109 @@
-# TicketPlug 🎫
+# Plug — campus marketplace
 
-A campus-exclusive ticket marketplace mobile application built with React Native and Expo, designed to connect college students for safe, verified ticket buying and selling.
+**Live demo: https://plug-yougijain.vercel.app** — no account needed, click *Explore the demo*.
 
-## 📱 Overview
+A mobile-first marketplace where verified students buy and sell textbooks, tickets, furniture,
+sublets and rides with people on their own campus. Built with React 18 + TypeScript on a
+Supabase (Postgres) backend, and shipped with a self-contained demo backend so the public link
+works without a database behind it.
 
-TicketPlug solves the problem of unverified ticket transactions on college campuses by providing a secure, campus-exclusive platform where only verified students can buy and sell event tickets. The app ensures trust through .edu email verification, built-in reputation systems, and campus-specific filtering.
+<p align="center">
+  <img src="docs/screenshots/feed.png" width="180" alt="Home feed" />
+  <img src="docs/screenshots/listing.png" width="180" alt="Listing detail" />
+  <img src="docs/screenshots/live.png" width="180" alt="Live flash deals" />
+  <img src="docs/screenshots/messages.png" width="180" alt="Buyer/seller thread" />
+  <img src="docs/screenshots/compose.png" width="180" alt="Listing composer" />
+</p>
 
-## 🎯 Project Status
+## What it does
 
-### ✅ Completed
+- **Campus feed** — active listings scoped to the student's university, with search and category filters, seller attribution, tags and a data-driven "Plug of the Day" highlight.
+- **Live tab** — flash deals with an expiry (15/30/60 min) that surface separately from the main feed and drop off when they lapse.
+- **Listing composer** — three-step flow (category → photos → details) with client-side image previews, price normalisation and an optional expiry date.
+- **Messages** — one thread per listing between buyer and seller, with the listing pinned at the top of the conversation.
+- **Saved & cart** — heart a listing to keep it, with a lightweight checkout-style cart.
+- **Profile** — a student's own active and sold listings.
+- **Auth** — email/password sign-up restricted to supported campuses, with email confirmation gating access (Supabase Auth).
 
-- **Project Setup & Configuration**
-  - Expo SDK 51.0.0 initialized with TypeScript
-  - React Native development environment configured
-  - Web, iOS, and Android build configurations
-  - EAS Build setup for production deployments
-  - App Store and Play Store submission configurations
+## How the live demo works
 
-- **Development Environment**
-  - Cross-platform development setup (iOS, Android, Web)
-  - Hot reload and fast refresh enabled
-  - TypeScript configuration with strict mode
-  - Basic UI components and styling system
+The app talks to its backend only through four objects in [`src/lib/api.ts`](src/lib/api.ts) —
+`userApi`, `postsApi`, `messagesApi`, `ridesApi` — plus `auth` and `storage` in
+[`src/lib/supabase.ts`](src/lib/supabase.ts). Each has two implementations:
 
-- **Infrastructure**
-  - Project structure established
-  - Navigation dependencies installed
-  - Asset management configured
-  - Build pipeline configured for app store submission
+| | Supabase backend | Demo backend ([`src/lib/demo/`](src/lib/demo)) |
+|---|---|---|
+| Selected when | `REACT_APP_SUPABASE_URL` + `REACT_APP_SUPABASE_ANON_KEY` are set | those are absent, or `REACT_APP_DEMO_MODE=true` |
+| Data | Postgres via PostgREST, RLS policies, Supabase Storage for photos | Seeded dataset ([`seed.ts`](src/lib/demo/seed.ts)) persisted in `localStorage`, photos downscaled to data URLs |
+| Auth | Supabase Auth with email confirmation | One-click demo identity; any `.edu` address also signs in |
 
-### 🚧 In Progress
+[`src/lib/env.ts`](src/lib/env.ts) makes the choice once at startup, so pages, hooks and React
+Query caches are identical in both modes. The demo backend adds a little simulated latency so
+loading and skeleton states get exercised, and the yellow banner's **Reset** restores the seed.
 
-- **Core Features Development**
-  - Authentication system (Sign In/Sign Up with .edu email verification)
-  - Home feed with ticket browsing and filtering
-  - Ticket creation and listing functionality
-  - User profile and saved tickets management
-  - Navigation structure implementation
+This is what keeps the link above working for anyone, any time — there is no database to cold-start
+and no sign-up wall — while the same build, pointed at a Supabase project, runs on Postgres.
 
-### 📋 Planned Features
+## Stack
 
-- **MVP Features**
-  - User authentication with .edu email verification
-  - Campus-specific ticket browsing
-  - Multi-step ticket creation form with image upload
-  - Ticket detail pages with seller contact information
-  - Saved tickets functionality
-  - User profile with reputation system
-  - Search and filter capabilities
+- **UI**: React 18, TypeScript, React Router 6, Tailwind CSS, Framer Motion, Heroicons
+- **State/data**: TanStack Query (server state, optimistic listing creation), Zustand (session, saved items, cart), React Hook Form + Zod (forms)
+- **Backend**: Supabase — Postgres, Auth, Storage, Row Level Security ([schema](create-complete-schema.sql), [reference](DATABASE_SCHEMA_REFERENCE.md))
+- **Tooling**: Create React App, Jest + Testing Library, Playwright, Vercel
 
-- **Backend Integration**
-  - Supabase database connection
-  - User authentication via Supabase Auth
-  - Image storage with Supabase Storage
-  - Real-time data synchronization
-  - Row-level security policies
+## Project layout
 
-- **Advanced Features (Post-MVP)**
-  - Push notifications
-  - In-app messaging
-  - Payment integration (Stripe)
-  - QR code ticket validation
-  - Admin dashboard
+```
+src/
+├── App.tsx                # routing, auth gate, desktop frame
+├── pages/                 # Home, LiveNow, Post, PostDetail, Messages, Profile, Saved, Cart, Login
+├── components/            # Navigation, DemoNotice, DesktopFrame, SVGIcon, ...
+├── hooks/                 # useAuth, usePosts, useMessages, useUsers (React Query wrappers)
+├── lib/
+│   ├── api.ts             # data-access interfaces; picks Supabase or demo at startup
+│   ├── supabase.ts        # client + auth/storage adapters
+│   ├── env.ts             # backend selection
+│   ├── demo/              # seed data, persistence, demo implementations
+│   ├── store.ts           # Zustand store
+│   └── queryClient.ts
+└── types/                 # app types and generated-style Database types
+tests/e2e/                 # Playwright specs
+```
 
-## 🛠️ Tech Stack
-
-### Frontend
-- **Framework**: React Native (Expo SDK 51)
-- **Language**: TypeScript
-- **Navigation**: React Navigation (Bottom Tabs + Stack)
-- **State Management**: Zustand (planned)
-- **Data Fetching**: React Query (planned)
-- **Forms**: React Hook Form + Zod (planned)
-- **Styling**: React Native StyleSheet
-
-### Backend (Planned)
-- **Database**: Supabase PostgreSQL
-- **Authentication**: Supabase Auth
-- **Storage**: Supabase Storage
-- **API**: Supabase REST API
-- **Serverless Functions**: Supabase Edge Functions
-
-### Third-Party Services (Planned)
-- **Payments**: Stripe Connect
-- **Push Notifications**: Expo Push Notifications / FCM
-- **Email**: Resend/Mailgun via Edge Functions
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+ and npm
-- Expo CLI (install globally: `npm install -g expo-cli`)
-- Expo Go app (for mobile testing) or iOS Simulator / Android Emulator
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd plug3
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Start the development server**
-   ```bash
-   npm start
-   ```
-
-4. **Run on specific platform**
-   ```bash
-   npm run web      # Web browser
-   npm run ios      # iOS Simulator (Mac only)
-   npm run android  # Android Emulator
-   ```
-
-### Development Commands
+## Running locally
 
 ```bash
-npm start              # Start Expo development server
-npm run web            # Run on web browser
-npm run ios            # Run on iOS simulator
-npm run android        # Run on Android emulator
-npm run build:ios      # Build production iOS app
-npm run build:android  # Build production Android app
-npm run build:all      # Build for both platforms
+npm install
+npm start            # http://localhost:3000, demo backend
 ```
 
-## 📁 Project Structure
+To run against Supabase instead, create a project, run
+[`create-complete-schema.sql`](create-complete-schema.sql) in the SQL editor, and copy
+[`.env.example`](.env.example) to `.env` with your project URL and anon key. Photos expect a public
+storage bucket named `post-images`.
 
+## Tests
+
+```bash
+npm test                        # Jest unit tests (composer price formatting, optimistic cache)
+npm run e2e                     # Playwright, boots the dev server
+E2E_BASE_URL=https://plug-yougijain.vercel.app npm run e2e   # same specs against the deployment
 ```
-plug3/
-├── App.tsx                 # Main application entry point
-├── app.json                # Expo configuration
-├── eas.json                # EAS Build configuration
-├── package.json            # Dependencies and scripts
-├── tsconfig.json           # TypeScript configuration
-├── APP_STORE_SUBMISSION.md # App store submission guide
-└── README.md              # This file
-```
 
-## 🎨 Design Principles
+[`tests/e2e/demo-mode.spec.ts`](tests/e2e/demo-mode.spec.ts) walks the demo path end to end: entry
+without credentials, filtering and search, deep links, the live tab, creating a listing, replying
+in a thread, the 404 fallback and the reset control. The other specs exercise the Supabase flow and
+skip unless `TEST_EMAIL`/`TEST_PASSWORD` are provided.
 
-- **Mobile-First**: Optimized for mobile devices with responsive design
-- **Campus-Exclusive**: Verified .edu email addresses only
-- **Trust & Safety**: Built-in reputation system and user verification
-- **Simple UX**: Intuitive 3-step ticket creation process
-- **Fast Performance**: Optimized for quick browsing and posting
+## Deployment
 
-## 🔒 Security & Privacy
+Deployed on Vercel from this repository. [`vercel.json`](vercel.json) adds the SPA rewrite so deep
+links like `/post/:id` resolve, and long-lived caching for hashed assets. No environment variables
+are set for the public deployment, which is what puts it in demo mode; setting the two Supabase
+variables in the Vercel project switches the same build to Postgres.
 
-- .edu email verification required for all users
-- Campus-specific data isolation
-- Row-level security policies (planned)
-- Secure image storage
-- User data privacy compliance
+## Known gaps
 
-## 📊 Business Model
-
-- **MVP**: Free platform with direct payments (Venmo, Zelle, cash)
-- **Future Revenue**: Featured listings, premium badges, campus partnerships
-
-## 🗺️ Roadmap
-
-### Phase 1: Foundation ✅
-- [x] Project setup and configuration
-- [x] Development environment
-- [x] Build pipeline setup
-
-### Phase 2: Core Features 🚧
-- [ ] Authentication system
-- [ ] Navigation structure
-- [ ] Home feed implementation
-- [ ] Ticket creation flow
-- [ ] User profile system
-
-### Phase 3: Backend Integration 📋
-- [ ] Supabase database setup
-- [ ] Authentication integration
-- [ ] Image upload functionality
-- [ ] Real-time data sync
-
-### Phase 4: Polish & Launch 📋
-- [ ] Error handling
-- [ ] Loading states
-- [ ] Empty states
-- [ ] Performance optimization
-- [ ] App store submission
-
-## 📝 Development Notes
-
-- The project uses Expo's managed workflow for simplified development
-- TypeScript is configured with strict mode for type safety
-- EAS Build is configured for cloud-based production builds
-- Web support is enabled for rapid development and testing
-
-## 🤝 Contributing
-
-This is a personal project. For questions or collaboration inquiries, please contact the project maintainer.
-
-## 📄 License
-
-Private project - All rights reserved
-
-## 🔗 Resources
-
-- [Expo Documentation](https://docs.expo.dev/)
-- [React Native Documentation](https://reactnative.dev/)
-- [Supabase Documentation](https://supabase.com/docs)
-- [App Store Submission Guide](./APP_STORE_SUBMISSION.md)
-
----
-
-**Status**: Active Development | **Version**: 1.0.0 | **Last Updated**: 2024
+- Offers and "mark as sold" in a thread are UI only; the payment path (Venmo/Zelle/cash) is out of band by design for the MVP.
+- Notifications are a placeholder badge; there is no push or realtime subscription yet.
+- `pages/Explore.tsx` and `pages/Cruze.tsx` are earlier explorations that are not routed.

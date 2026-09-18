@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 import { usePosts } from '../hooks/usePosts';
 import { useAppStore } from '../lib/store';
 import { Post } from '../types/index';
@@ -14,6 +13,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { EmptyStateIcon, LogoIcon } from '../components/SVGIcon';
 import CategoryPlaceholder from '../components/CategoryPlaceholder';
+import { log } from '../lib/logger'
 
 const Home: React.FC = () => {
   // Note: currentUser not used in Home; remove to avoid lint warning
@@ -65,7 +65,7 @@ const Home: React.FC = () => {
 
   const handleNotifications = () => {
     // Handle notifications - wire to real notification system
-    console.log('Notifications clicked');
+    log('Notifications clicked');
     setHasNotifications(false); // Clear badge on tap
   };
 
@@ -77,6 +77,17 @@ const Home: React.FC = () => {
     const matchesCategory = selectedCategory === 'All Categories' || post.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  // "Plug of the Day": the priciest active listing, drawn from real feed data
+  // rather than hardcoded. Hidden while a search or category filter is active,
+  // so the highlight never contradicts what the visitor asked for.
+  const isBrowsingUnfiltered = !searchQuery.trim() && selectedCategory === 'All Categories';
+  const featuredPost = isBrowsingUnfiltered
+    ? allHomePosts.reduce<Post | null>((best, candidate) => {
+        if (!best) return candidate;
+        return (candidate.price ?? 0) > (best.price ?? 0) ? candidate : best;
+      }, null)
+    : null;
 
   const categories = [
     { value: 'All Categories', icon: '🏷️' },
@@ -203,24 +214,31 @@ const Home: React.FC = () => {
 
              {/* Content */}
        <div className="px-4 py-6">
-                 {/* Plug of the Day - Single Card */}
-         <div className="mb-8">
-           <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-[#ECECEC]">
-             <div className="h-7 bg-[#FFB400] flex items-center justify-center">
-               <span className="text-sm font-semibold text-[#0E1F33]">🔥 Plug of the Day</span>
-             </div>
-             <div className="p-4">
-               <h3 className="text-lg font-bold text-[#0E1F33] mb-2">iPhone 13 Pro - Like New</h3>
-               <p className="text-gray-600 text-sm mb-3">Perfect condition, comes with original box and charger. Need to sell before graduation!</p>
-               <div className="flex items-center justify-between">
-                 <span className="text-3xl font-bold text-[#FF6B35]">$750</span>
-                 <button className="px-4 py-2 bg-[#FF6B35] text-white rounded-xl font-semibold hover:brightness-110 transition-colors">
-                   View Details
-                 </button>
-               </div>
-             </div>
-           </div>
-         </div>
+        {/* Plug of the Day */}
+        {!isLoading && featuredPost && (
+          <div className="mb-8">
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-[#ECECEC]">
+              <div className="h-7 bg-[#FFB400] flex items-center justify-center">
+                <span className="text-sm font-semibold text-[#0E1F33]">🔥 Plug of the Day</span>
+              </div>
+              <div className="p-4">
+                <h3 className="text-lg font-bold text-[#0E1F33] mb-2">{featuredPost.title}</h3>
+                <p className="text-gray-600 text-sm mb-3 line-clamp-2">{featuredPost.description}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-3xl font-bold text-[#FF6B35]">
+                    {typeof featuredPost.price === 'number' ? `$${featuredPost.price}` : 'Free'}
+                  </span>
+                  <button
+                    onClick={() => navigate(`/post/${featuredPost.id}`)}
+                    className="px-4 py-2 bg-[#FF6B35] text-white rounded-xl font-semibold hover:brightness-110 transition-colors"
+                  >
+                    View Details
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Feed */}
         {isLoading ? (
@@ -267,10 +285,10 @@ const Home: React.FC = () => {
                 key={post.id} 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ 
-                  duration: 0.4, 
-                  delay: index * 0.1,
-                  ease: "easeOut"
+                transition={{
+                  duration: 0.35,
+                  delay: Math.min(index * 0.05, 0.3),
+                  ease: 'easeOut'
                 }}
                 whileHover={{ scale: 1.02 }}
                 className="bg-white rounded-xl p-4 shadow-lg cursor-pointer hover:shadow-xl transition-shadow border border-[#ECECEC]"
@@ -298,6 +316,7 @@ const Home: React.FC = () => {
                       handleSavePost(post);
                     }}
                     className="p-2 text-gray-400 hover:text-[#FF6B35] transition-colors"
+                    aria-label={`Save ${post.title}`}
                   >
                     <HeartIcon className="h-5 w-5" />
                   </button>

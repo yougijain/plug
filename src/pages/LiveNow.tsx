@@ -245,6 +245,7 @@ const LiveNow: React.FC<LiveNowProps> = ({ currentUser }) => {
           </div>
           <button
             onClick={handleRefresh}
+            aria-label="Refresh the live feed"
             className={`p-2 rounded-full transition-colors ${
               isRefreshing ? 'bg-[#FF6B35]/10 text-[#FF6B35]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
