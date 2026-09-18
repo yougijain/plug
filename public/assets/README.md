@@ -8,7 +8,8 @@ This directory contains all SVG assets for the Plug app, organized by type.
 public/assets/
 ├── icons/           # Icon SVGs (logos, badges, etc.)
 ├── illustrations/   # Illustration SVGs (empty states, etc.)
-└── images/          # Other image assets
+├── images/          # Logo
+└── listings/        # Placeholder listing photos for demo mode
 ```
 
 ## Available Assets
@@ -18,7 +19,10 @@ public/assets/
 - `loading-spinner.svg` - Animated loading spinner
 
 ### Images (`/images/`)
-- `logo.png` - Main Plug app logo
+- `logo.svg` - Plug mark (white ring and orange plug body; sits on the navy header)
+
+### Listings (`/listings/`)
+- Category placeholder photos used by the demo dataset (`electronics-phone.svg`, `tickets-game.svg`, ...)
 
 ### Illustrations (`/illustrations/`)
 - `home_no_posts.svg` - Empty state for home page with no posts
@@ -35,7 +39,7 @@ public/assets/
 
 ### Option 1: Direct Usage
 ```jsx
-<img src="/assets/images/logo.png" alt="Plug Logo" />
+<img src="/assets/images/logo.svg" alt="Plug Logo" />
 <img src="/assets/illustrations/empty-state.svg" alt="Empty state" />
 ```
 

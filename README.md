@@ -106,4 +106,3 @@ variables in the Vercel project switches the same build to Postgres.
 
 - Offers and "mark as sold" in a thread are UI only; the payment path (Venmo/Zelle/cash) is out of band by design for the MVP.
 - Notifications are a placeholder badge; there is no push or realtime subscription yet.
-- `pages/Explore.tsx` and `pages/Cruze.tsx` are earlier explorations that are not routed.
